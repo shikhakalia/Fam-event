@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FamEvent — Family Planning & Event Organization</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; background:#FFFBF5; }
+  .pill { font-size:11px; font-weight:600; padding:4px 10px; border-radius:9999px; display:inline-block; }
+  table th, table td { padding: 8px 6px; }
+  .navlink.active { background:#ede9fe; color:#6d28d9; }
+  .panel { display:none; }
+  .panel.active { display:block; }
+  input, select { outline:none; }
+  input:focus, select:focus { border-color:#7c3aed !important; }
+</style>
+</head>
+<body class="text-slate-800">
+
+<!-- HERO -->
+<header class="max-w-7xl mx-auto px-6 pt-10 pb-6 text-center">
+  <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">All-in-One Platform for</h1>
+  <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight mt-1">
+    <span class="text-indigo-600">Family Planning</span>
+    <span class="text-slate-900">&</span>
+    <span class="text-pink-500">Event Organization</span>
+  </h2>
+  <p class="mt-4 text-slate-500 text-lg">Plan. Organize. Celebrate. All in one place — saved right in this browser.</p>
+</header>
+
+<!-- MAIN -->
+<main class="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-[220px_1fr_340px] gap-5">
+
+  <!-- SIDEBAR -->
+  <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 h-fit">
+    <div class="flex items-center gap-2 px-2 pb-4">
+      <i class="fa-solid fa-heart text-pink-500"></i>
+      <span class="font-bold text-lg">FamEvent</span>
+    </div>
+    <nav class="space-y-1 text-sm font-medium" id="sidebar">
+      <a href="#" data-tab="dashboard" class="navlink active flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500"><i class="fa-solid fa-house w-4"></i>Dashboard</a>
+      <a href="#" data-tab="family" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-users w-4"></i>Family</a>
+      <a href="#" data-tab="events" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-sparkles w-4"></i>Events</a>
+      <a href="#" data-tab="guests" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-user-plus w-4"></i>Guests</a>
+      <a href="#" data-tab="budget" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-wallet w-4"></i>Budget</a>
+      <a href="#" data-tab="travel" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-plane w-4"></i>Travel</a>
+      <a href="#" data-tab="soon" data-title="Themes & Decor" data-icon="fa-palette" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-palette w-4"></i>Themes & Decor</a>
+      <a href="#" data-tab="soon" data-title="Tasks" data-icon="fa-square-check" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-square-check w-4"></i>Tasks</a>
+      <a href="#" data-tab="soon" data-title="Notes" data-icon="fa-note-sticky" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-note-sticky w-4"></i>Notes</a>
+      <a href="#" data-tab="soon" data-title="Messages" data-icon="fa-message" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-message w-4"></i>Messages</a>
+      <a href="#" data-tab="soon" data-title="Settings" data-icon="fa-gear" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-gear w-4"></i>Settings</a>
+    </nav>
+  </div>
+
+  <!-- CENTER -->
+  <div class="space-y-5">
+
+    <!-- welcome + stats (always visible) -->
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-xl font-bold">Welcome, Shikha! 👋</h3>
+          <p class="text-sm text-slate-500 mt-0.5">Here's what's happening with your family & events.</p>
+        </div>
+        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-violet-300 to-pink-300"></div>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5" id="stat-grid"></div>
+    </div>
+
+    <!-- DASHBOARD PANEL -->
+    <section class="panel active" id="panel-dashboard">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-bold">Upcoming Events</h4>
+            <a href="#" onclick="goTab('events');return false;" class="text-xs text-violet-600 font-medium">View all</a>
+          </div>
+          <div class="space-y-3 text-sm" id="dash-upcoming"></div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-bold">Family Calendar</h4>
+            <div class="flex items-center gap-2 text-sm font-medium text-slate-600">
+              <i class="fa-solid fa-chevron-left text-xs cursor-pointer" onclick="shiftMonth(-1)"></i>
+              <span id="cal-label"></span>
+              <i class="fa-solid fa-chevron-right text-xs cursor-pointer" onclick="shiftMonth(1)"></i>
+            </div>
+          </div>
+          <div class="grid grid-cols-7 text-center text-[10px] font-semibold text-slate-400 mb-1">
+            <span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
+          </div>
+          <div class="grid grid-cols-7 gap-y-1.5 text-center text-xs" id="cal-grid"></div>
+        </div>
+      </div>
+
+      <div class="bg-violet-50/60 border border-violet-100 rounded-2xl p-5 mt-5">
+        <p class="font-bold mb-3">On the roadmap</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+          <div class="flex items-start gap-2"><i class="fa-solid fa-square-check text-violet-600 mt-0.5"></i><span class="text-slate-600">RSVP & Invitation Management</span></div>
+          <div class="flex items-start gap-2"><i class="fa-solid fa-square-check text-violet-600 mt-0.5"></i><span class="text-slate-600">Event Itinerary / Schedule</span></div>
+          <div class="flex items-start gap-2"><i class="fa-solid fa-square-check text-violet-600 mt-0.5"></i><span class="text-slate-600">Venue Booking & Vendor List</span></div>
+          <div class="flex items-start gap-2"><i class="fa-solid fa-square-check text-violet-600 mt-0.5"></i><span class="text-slate-600">Gift Registry / Wish List</span></div>
+          <div class="flex items-start gap-2"><i class="fa-solid fa-square-check text-violet-600 mt-0.5"></i><span class="text-slate-600">Shared Family Calendar Sync</span></div>
+          <div class="flex items-start gap-2"><i class="fa-solid fa-square-check text-violet-600 mt-0.5"></i><span class="text-slate-600">Expense Splitter</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAMILY PANEL -->
+    <section class="panel" id="panel-family">
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-5">
+        <h4 class="font-bold mb-3"><i class="fa-solid fa-user-plus text-violet-600 mr-1"></i> Add a family member</h4>
+        <div class="flex flex-wrap gap-2">
+          <input id="fam-first" placeholder="First name" class="flex-1 min-w-[120px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <input id="fam-last" placeholder="Last name" class="flex-1 min-w-[120px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <input id="fam-relation" placeholder="Relation" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <input id="fam-birthday" type="date" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <button onclick="addFamily()" class="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700">Add</button>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <h4 class="font-bold mb-3">Family members</h4>
+        <table class="w-full text-sm">
+          <thead><tr class="text-slate-400 text-left text-xs uppercase"><th>First</th><th>Last</th><th>Relation</th><th>Birthday</th><th></th></tr></thead>
+          <tbody id="family-table"></tbody>
+        </table>
+        <p class="text-slate-400 text-sm py-2 text-center" id="family-empty">No family members added yet.</p>
+      </div>
+    </section>
+
+    <!-- EVENTS PANEL -->
+    <section class="panel" id="panel-events">
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-5">
+        <h4 class="font-bold mb-3"><i class="fa-solid fa-sparkles text-violet-600 mr-1"></i> Create an event</h4>
+        <div class="flex flex-wrap gap-2 mb-2">
+          <input id="ev-name" placeholder="Event name" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <select id="ev-type" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <option>Birthday</option><option>Wedding</option><option>Baby Shower</option>
+            <option>Graduation</option><option>Anniversary</option><option>Family Reunion</option>
+            <option>Holiday Party</option><option>Dinner</option><option>Conference</option>
+            <option>Association Event</option><option>Other</option>
+          </select>
+        </div>
+        <div class="flex flex-wrap gap-2 mb-2">
+          <input id="ev-date" type="date" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <input id="ev-location" placeholder="Location" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <input id="ev-budget" type="number" placeholder="Budget $" class="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm">
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <input id="ev-desc" placeholder="Description / theme" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <button onclick="addEvent()" class="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700">Create</button>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <h4 class="font-bold mb-3">Your events</h4>
+        <div class="space-y-3 text-sm" id="events-list"></div>
+        <p class="text-slate-400 text-sm py-2 text-center" id="events-empty">No events yet — create one above.</p>
+      </div>
+    </section>
+
+    <!-- GUESTS PANEL -->
+    <section class="panel" id="panel-guests">
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-sm font-semibold text-slate-500">Event:</span>
+          <select id="guest-event-picker" onchange="renderGuests()" class="px-3 py-2 border border-violet-200 bg-violet-50 text-violet-700 font-semibold rounded-lg text-sm"></select>
+        </div>
+        <div class="flex flex-wrap gap-2 mb-4">
+          <input id="g-first" placeholder="First name" class="flex-1 min-w-[100px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <input id="g-last" placeholder="Last name" class="flex-1 min-w-[100px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <input id="g-phone" placeholder="Phone" class="flex-1 min-w-[110px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <input id="g-email" type="email" placeholder="Email" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <select id="g-rsvp" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <option value="pending">Pending</option><option value="accepted">Accepted</option><option value="declined">Declined</option>
+          </select>
+          <input id="g-people" type="number" min="0" placeholder="# people" class="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <input id="g-notes" placeholder="Notes" class="flex-1 min-w-[120px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <button onclick="addGuest()" class="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700">Add guest</button>
+        </div>
+        <table class="w-full text-sm">
+          <thead><tr class="text-slate-400 text-left text-xs uppercase"><th>Name</th><th>Phone</th><th>Email</th><th>RSVP</th><th>People</th><th>Notes</th><th>Update</th><th></th></tr></thead>
+          <tbody id="guests-table"></tbody>
+        </table>
+        <p class="text-slate-400 text-sm py-2 text-center" id="guests-empty">No guests added for this event yet.</p>
+      </div>
+    </section>
+
+    <!-- BUDGET PANEL -->
+    <section class="panel" id="panel-budget">
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-sm font-semibold text-slate-500">Event:</span>
+          <select id="budget-event-picker" onchange="renderBudget()" class="px-3 py-2 border border-violet-200 bg-violet-50 text-violet-700 font-semibold rounded-lg text-sm"></select>
+        </div>
+        <div class="flex flex-wrap gap-2 mb-4">
+          <input id="b-category" placeholder="Category" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <input id="b-planned" type="number" placeholder="Planned $" class="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <input id="b-actual" type="number" placeholder="Actual $" class="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <button onclick="addBudgetItem()" class="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700">Add</button>
+        </div>
+        <table class="w-full text-sm">
+          <thead><tr class="text-slate-400 text-left text-xs uppercase"><th>Category</th><th>Planned</th><th>Actual</th><th></th></tr></thead>
+          <tbody id="budget-table"></tbody>
+        </table>
+        <p class="text-slate-400 text-sm py-2 text-center" id="budget-empty">No budget items yet.</p>
+        <p class="text-sm font-medium mt-3" id="budget-totals"></p>
+      </div>
+    </section>
+
+    <!-- TRAVEL PANEL -->
+    <section class="panel" id="panel-travel">
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-sm font-semibold text-slate-500">Event:</span>
+          <select id="travel-event-picker" onchange="renderTravel()" class="px-3 py-2 border border-violet-200 bg-violet-50 text-violet-700 font-semibold rounded-lg text-sm"></select>
+        </div>
+        <div class="flex flex-wrap gap-2 mb-2">
+          <input id="tr-traveler" placeholder="Traveler name" class="flex-1 min-w-[130px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <select id="tr-mode" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <option>Flight</option><option>Train</option><option>Car</option><option>Bus</option><option>Other</option>
+          </select>
+          <input id="tr-details" placeholder="Flight # / route / details" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+        </div>
+        <div class="flex flex-wrap gap-2 mb-2">
+          <input id="tr-arrival" type="datetime-local" class="px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="Arrival">
+          <input id="tr-departure" type="datetime-local" class="px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="Departure">
+          <input id="tr-hotel" placeholder="Hotel / accommodation" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <input id="tr-notes" placeholder="Notes (pickup, luggage, etc.)" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <button onclick="addTravel()" class="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700">Add travel info</button>
+        </div>
+        <table class="w-full text-sm mt-4">
+          <thead><tr class="text-slate-400 text-left text-xs uppercase"><th>Traveler</th><th>Mode</th><th>Details</th><th>Arrival</th><th>Departure</th><th>Hotel</th><th>Notes</th><th></th></tr></thead>
+          <tbody id="travel-table"></tbody>
+        </table>
+        <p class="text-slate-400 text-sm py-2 text-center" id="travel-empty">No travel info added for this event yet.</p>
+      </div>
+    </section>
+
+    <!-- PLACEHOLDER PANEL (Themes, Tasks, Notes, Messages, Settings) -->
+    <section class="panel" id="panel-soon">
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 text-center">
+        <div class="w-14 h-14 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center mx-auto mb-3 text-xl">
+          <i class="fa-solid" id="soon-icon"></i>
+        </div>
+        <h4 class="font-bold text-lg" id="soon-title"></h4>
+        <p class="text-slate-500 text-sm mt-1">This section is on the roadmap and not built yet. Tell me what you want in it and I'll add it next.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="space-y-5 pb-10">
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+      <div class="flex items-center gap-2 mb-3 font-bold"><i class="fa-solid fa-users text-violet-600"></i> Guest List</div>
+      <table class="w-full text-xs">
+        <thead><tr class="text-slate-400 text-left"><th>Name</th><th>RSVP</th></tr></thead>
+        <tbody id="side-guest-list"></tbody>
+      </table>
+      <p class="text-slate-400 text-xs py-2 text-center" id="side-guest-empty">No guests yet.</p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+      <div class="flex items-center gap-2 font-bold mb-3"><i class="fa-solid fa-calendar text-violet-600"></i> Next Event</div>
+      <div id="side-event-details" class="text-xs space-y-1.5"></div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2 font-bold"><i class="fa-solid fa-palette text-violet-600"></i> Decoration Themes</div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 text-xs font-medium">
+        <div><div class="h-16 rounded-lg bg-gradient-to-br from-pink-200 via-rose-100 to-amber-100"></div><p class="mt-1">Pastel Dream</p></div>
+        <div><div class="h-16 rounded-lg bg-gradient-to-br from-rose-200 via-amber-100 to-emerald-100"></div><p class="mt-1">Royal Elegance</p></div>
+        <div><div class="h-16 rounded-lg bg-gradient-to-br from-amber-800 via-amber-600 to-amber-300"></div><p class="mt-1">Rustic Charm</p></div>
+        <div><div class="h-16 rounded-lg bg-gradient-to-br from-violet-900 via-purple-700 to-fuchsia-500"></div><p class="mt-1">Modern Luxe</p></div>
+      </div>
+      <p class="text-slate-400 text-[11px] mt-2">Visual only for now — picking a theme here doesn't do anything yet.</p>
+    </div>
+  </div>
+</main>
+
+<!-- FOOTER -->
+<!-- AI CHAT WIDGET -->
+<button id="chat-fab" onclick="toggleChat()" class="fixed bottom-5 right-5 w-14 h-14 rounded-full bg-violet-600 text-white shadow-lg flex items-center justify-center text-xl hover:bg-violet-700 z-40">
+  <i class="fa-solid fa-comment-dots"></i>
+</button>
+<div id="chat-panel" class="fixed bottom-24 right-5 w-80 max-h-[70vh] bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden z-40" style="display:none;">
+  <div class="bg-violet-600 text-white px-4 py-3 flex items-center justify-between">
+    <span class="font-semibold text-sm"><i class="fa-solid fa-sparkles mr-1"></i> FamEvent Assistant</span>
+    <button onclick="toggleChat()" class="text-white/80 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div id="chat-messages" class="flex-1 overflow-y-auto p-3 space-y-2 text-sm bg-slate-50"></div>
+  <div class="p-2 border-t border-slate-100 flex gap-2">
+    <input id="chat-input" placeholder="Ask about your events, budget, guests..." class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm" onkeydown="if(event.key==='Enter') sendChat();">
+    <button onclick="sendChat()" class="w-9 h-9 rounded-lg bg-violet-600 text-white flex items-center justify-center hover:bg-violet-700"><i class="fa-solid fa-paper-plane text-xs"></i></button>
+  </div>
+</div>
+
+<footer class="bg-violet-950 text-white mt-8">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div class="flex items-center gap-2 text-sm font-medium"><i class="fa-solid fa-heart text-pink-400"></i> One platform. Every celebration. Lifetime of memories.</div>
+    <div class="flex items-center gap-2 text-violet-300 text-xs">Data is saved only in this browser (localStorage).</div>
+  </div>
+</footer>
+
+<script>
+// ---------- data layer ----------
+const STORAGE_KEY = "family-events-data-v2";
+function loadData() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) { try { return JSON.parse(raw); } catch(e) {} }
+  return { family: [], events: [], guests: [], budget: [], travel: [] };
+}
+let data = loadData();
+if (!data.travel) data.travel = [];
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); renderAll(); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+const TYPE_EMOJI = { Birthday:"🎂", Wedding:"💍", "Baby Shower":"🍼", Graduation:"🎓", Anniversary:"💐", "Family Reunion":"👨‍👩‍👧‍👦", "Holiday Party":"🎄", Dinner:"🍽️", Conference:"🎤", "Association Event":"🏛️", Other:"✨" };
+
+// ---------- nav ----------
+document.getElementById("sidebar").addEventListener("click", (e) => {
+  const a = e.target.closest("a[data-tab]");
+  if (!a) return;
+  e.preventDefault();
+  document.querySelectorAll(".navlink").forEach(l => l.classList.remove("active"));
+  a.classList.add("active");
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  if (a.dataset.tab === "soon") {
+    document.getElementById("soon-title").textContent = a.dataset.title;
+    document.getElementById("soon-icon").className = "fa-solid " + a.dataset.icon;
+    document.getElementById("panel-soon").classList.add("active");
+  } else {
+    document.getElementById("panel-" + a.dataset.tab).classList.add("active");
+  }
+});
+function goTab(tab) {
+  document.querySelector(`.navlink[data-tab="${tab}"]`).click();
+}
+
+// ---------- family ----------
+function addFamily() {
+  const firstName = document.getElementById("fam-first").value.trim();
+  if (!firstName) return;
+  data.family.push({
+    id: uid(),
+    firstName,
+    lastName: document.getElementById("fam-last").value.trim(),
+    relation: document.getElementById("fam-relation").value.trim(),
+    birthday: document.getElementById("fam-birthday").value
+  });
+  ["fam-first","fam-last","fam-relation","fam-birthday"].forEach(id => document.getElementById(id).value = "");
+  save();
+}
+function removeFamily(id) { data.family = data.family.filter(f => f.id !== id); save(); }
+function renderFamily() {
+  const tbody = document.getElementById("family-table");
+  tbody.innerHTML = "";
+  document.getElementById("family-empty").style.display = data.family.length ? "none" : "block";
+  data.family.forEach(f => {
+    const tr = document.createElement("tr");
+    tr.className = "border-t border-slate-50";
+    tr.innerHTML = `<td class="font-medium">${esc(f.firstName)}</td><td class="font-medium">${esc(f.lastName)}</td><td class="text-slate-500">${esc(f.relation)}</td><td class="text-slate-500">${esc(f.birthday)}</td>
+      <td><button onclick="removeFamily('${f.id}')" class="text-slate-400 hover:text-rose-500 text-xs font-semibold">remove</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ---------- events ----------
+function addEvent() {
+  const name = document.getElementById("ev-name").value.trim();
+  if (!name) return;
+  data.events.push({
+    id: uid(), name, type: document.getElementById("ev-type").value,
+    date: document.getElementById("ev-date").value,
+    location: document.getElementById("ev-location").value.trim(),
+    budget: parseFloat(document.getElementById("ev-budget").value) || 0,
+    description: document.getElementById("ev-desc").value.trim()
+  });
+  ["ev-name","ev-date","ev-location","ev-budget","ev-desc"].forEach(id => document.getElementById(id).value = "");
+  save();
+}
+function removeEvent(id) {
+  data.events = data.events.filter(e => e.id !== id);
+  data.guests = data.guests.filter(g => g.eventId !== id);
+  data.budget = data.budget.filter(b => b.eventId !== id);
+  save();
+}
+function renderEvents() {
+  const list = document.getElementById("events-list");
+  list.innerHTML = "";
+  const sorted = data.events.slice().sort((a,b) => (a.date||"").localeCompare(b.date||""));
+  document.getElementById("events-empty").style.display = sorted.length ? "none" : "block";
+  sorted.forEach(ev => {
+    const div = document.createElement("div");
+    div.className = "flex items-center gap-3";
+    div.innerHTML = `
+      <div class="w-11 h-11 rounded-lg bg-slate-100 flex items-center justify-center text-xl">${TYPE_EMOJI[ev.type] || "✨"}</div>
+      <div class="flex-1 min-w-0"><p class="font-semibold truncate">${esc(ev.name)}</p><p class="text-xs text-slate-400">${esc(ev.date)||"no date set"} · ${esc(ev.location)||"no location"} · budget $${ev.budget.toFixed(0)}</p></div>
+      <span class="pill bg-indigo-100 text-indigo-600">${esc(ev.type)}</span>
+      <button onclick="removeEvent('${ev.id}')" class="text-slate-400 hover:text-rose-500 text-xs font-semibold ml-2">remove</button>`;
+    list.appendChild(div);
+  });
+  populateEventPickers();
+}
+function populateEventPickers() {
+  ["guest-event-picker","budget-event-picker","travel-event-picker"].forEach(pid => {
+    const sel = document.getElementById(pid);
+    const prev = sel.value;
+    sel.innerHTML = "";
+    if (!data.events.length) { sel.innerHTML = "<option value=''>Create an event first</option>"; return; }
+    data.events.forEach(ev => {
+      const opt = document.createElement("option");
+      opt.value = ev.id; opt.textContent = ev.name;
+      sel.appendChild(opt);
+    });
+    if (prev && data.events.some(e => e.id === prev)) sel.value = prev;
+  });
+}
+
+// ---------- guests ----------
+function addGuest() {
+  const eventId = document.getElementById("guest-event-picker").value;
+  const firstName = document.getElementById("g-first").value.trim();
+  if (!eventId || !firstName) return;
+  data.guests.push({
+    id: uid(), eventId, firstName,
+    lastName: document.getElementById("g-last").value.trim(),
+    phone: document.getElementById("g-phone").value.trim(),
+    email: document.getElementById("g-email").value.trim(),
+    rsvp: document.getElementById("g-rsvp").value,
+    people: parseInt(document.getElementById("g-people").value) || 1,
+    notes: document.getElementById("g-notes").value.trim()
+  });
+  ["g-first","g-last","g-phone","g-email","g-people","g-notes"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("g-rsvp").value = "pending";
+  save();
+}
+function updateGuestRsvp(id, value) { const g = data.guests.find(g => g.id === id); if (g) { g.rsvp = value; save(); } }
+function removeGuest(id) { data.guests = data.guests.filter(g => g.id !== id); save(); }
+function rsvpPill(rsvp) {
+  const map = { accepted: "bg-emerald-100 text-emerald-600", pending: "bg-amber-100 text-amber-600", declined: "bg-rose-100 text-rose-600" };
+  return `<span class="pill ${map[rsvp]}">${rsvp}</span>`;
+}
+function fullName(p) { return [p.firstName, p.lastName].filter(Boolean).join(" "); }
+function eventById(id) { return data.events.find(e => e.id === id); }
+
+// These build mailto:/sms: links so clicking opens YOUR OWN email/messages app
+// with the message pre-filled — nothing is sent automatically or in the background.
+function emailGuest(id) {
+  const g = data.guests.find(g => g.id === id);
+  const ev = eventById(g.eventId);
+  if (!g.email) { alert("No email on file for this guest."); return; }
+  const subject = encodeURIComponent(`Update: ${ev ? ev.name : "our event"}`);
+  const body = encodeURIComponent(`Hi ${g.firstName},\n\nJust a quick update about ${ev ? ev.name : "the event"}${ev && ev.date ? " on " + ev.date : ""}${ev && ev.location ? " at " + ev.location : ""}.\n\nLooking forward to seeing you!\n`);
+  window.location.href = `mailto:${g.email}?subject=${subject}&body=${body}`;
+}
+function textGuest(id) {
+  const g = data.guests.find(g => g.id === id);
+  const ev = eventById(g.eventId);
+  if (!g.phone) { alert("No phone on file for this guest."); return; }
+  const body = encodeURIComponent(`Hi ${g.firstName}! Quick update on ${ev ? ev.name : "the event"}${ev && ev.date ? " (" + ev.date + ")" : ""} — can't wait to see you!`);
+  window.location.href = `sms:${g.phone}?&body=${body}`;
+}
+function renderGuests() {
+  const eventId = document.getElementById("guest-event-picker").value;
+  const tbody = document.getElementById("guests-table");
+  tbody.innerHTML = "";
+  const list = data.guests.filter(g => g.eventId === eventId);
+  document.getElementById("guests-empty").style.display = list.length ? "none" : "block";
+  list.forEach(g => {
+    const tr = document.createElement("tr");
+    tr.className = "border-t border-slate-50";
+    tr.innerHTML = `<td class="font-medium">${esc(fullName(g))}</td><td class="text-slate-500">${esc(g.phone)}</td><td class="text-slate-500">${esc(g.email)}</td>
+      <td><select onchange="updateGuestRsvp('${g.id}', this.value)" class="border border-slate-200 rounded-md text-xs px-2 py-1">
+        <option value="pending" ${g.rsvp==="pending"?"selected":""}>Pending</option>
+        <option value="accepted" ${g.rsvp==="accepted"?"selected":""}>Accepted</option>
+        <option value="declined" ${g.rsvp==="declined"?"selected":""}>Declined</option>
+      </select></td>
+      <td>${g.people}</td><td class="text-slate-500">${esc(g.notes)}</td>
+      <td class="whitespace-nowrap">
+        <button onclick="emailGuest('${g.id}')" title="Email" class="text-violet-500 hover:text-violet-700 mr-2"><i class="fa-solid fa-envelope"></i></button>
+        <button onclick="textGuest('${g.id}')" title="Text" class="text-emerald-500 hover:text-emerald-700"><i class="fa-solid fa-comment-sms"></i></button>
+      </td>
+      <td><button onclick="removeGuest('${g.id}')" class="text-slate-400 hover:text-rose-500 text-xs font-semibold">remove</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ---------- budget ----------
+function addBudgetItem() {
+  const eventId = document.getElementById("budget-event-picker").value;
+  const category = document.getElementById("b-category").value.trim();
+  if (!eventId || !category) return;
+  data.budget.push({ id: uid(), eventId, category, planned: parseFloat(document.getElementById("b-planned").value) || 0, actual: parseFloat(document.getElementById("b-actual").value) || 0 });
+  ["b-category","b-planned","b-actual"].forEach(id => document.getElementById(id).value = "");
+  save();
+}
+function removeBudgetItem(id) { data.budget = data.budget.filter(b => b.id !== id); save(); }
+function renderBudget() {
+  const eventId = document.getElementById("budget-event-picker").value;
+  const tbody = document.getElementById("budget-table");
+  tbody.innerHTML = "";
+  const list = data.budget.filter(b => b.eventId === eventId);
+  document.getElementById("budget-empty").style.display = list.length ? "none" : "block";
+  let planned = 0, actual = 0;
+  list.forEach(b => {
+    planned += b.planned; actual += b.actual;
+    const tr = document.createElement("tr");
+    tr.className = "border-t border-slate-50";
+    tr.innerHTML = `<td class="font-medium">${esc(b.category)}</td><td>$${b.planned.toFixed(0)}</td><td>$${b.actual.toFixed(0)}</td>
+      <td><button onclick="removeBudgetItem('${b.id}')" class="text-slate-400 hover:text-rose-500 text-xs font-semibold">remove</button></td>`;
+    tbody.appendChild(tr);
+  });
+  const ev = data.events.find(e => e.id === eventId);
+  const total = ev ? ev.budget : 0;
+  document.getElementById("budget-totals").textContent = (total || planned || actual)
+    ? `Event budget: $${total.toFixed(0)}  •  Planned: $${planned.toFixed(0)}  •  Actual: $${actual.toFixed(0)}  •  Remaining: $${(total-actual).toFixed(0)}`
+    : "";
+}
+
+// ---------- travel ----------
+function addTravel() {
+  const eventId = document.getElementById("travel-event-picker").value;
+  const traveler = document.getElementById("tr-traveler").value.trim();
+  if (!eventId || !traveler) return;
+  data.travel.push({
+    id: uid(), eventId, traveler,
+    mode: document.getElementById("tr-mode").value,
+    details: document.getElementById("tr-details").value.trim(),
+    arrival: document.getElementById("tr-arrival").value,
+    departure: document.getElementById("tr-departure").value,
+    hotel: document.getElementById("tr-hotel").value.trim(),
+    notes: document.getElementById("tr-notes").value.trim()
+  });
+  ["tr-traveler","tr-details","tr-arrival","tr-departure","tr-hotel","tr-notes"].forEach(id => document.getElementById(id).value = "");
+  save();
+}
+function removeTravel(id) { data.travel = data.travel.filter(t => t.id !== id); save(); }
+function renderTravel() {
+  const eventId = document.getElementById("travel-event-picker").value;
+  const tbody = document.getElementById("travel-table");
+  tbody.innerHTML = "";
+  const list = data.travel.filter(t => t.eventId === eventId);
+  document.getElementById("travel-empty").style.display = list.length ? "none" : "block";
+  list.forEach(t => {
+    const tr = document.createElement("tr");
+    tr.className = "border-t border-slate-50";
+    tr.innerHTML = `<td class="font-medium">${esc(t.traveler)}</td><td class="text-slate-500">${esc(t.mode)}</td><td class="text-slate-500">${esc(t.details)}</td>
+      <td class="text-slate-500">${esc(t.arrival ? t.arrival.replace("T"," ") : "")}</td><td class="text-slate-500">${esc(t.departure ? t.departure.replace("T"," ") : "")}</td>
+      <td class="text-slate-500">${esc(t.hotel)}</td><td class="text-slate-500">${esc(t.notes)}</td>
+      <td><button onclick="removeTravel('${t.id}')" class="text-slate-400 hover:text-rose-500 text-xs font-semibold">remove</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ---------- dashboard: stats + upcoming + sidebar previews ----------
+function renderDashboard() {
+  const today = new Date().toISOString().slice(0,10);
+  const upcoming = data.events.filter(e => e.date >= today).sort((a,b) => a.date.localeCompare(b.date));
+  const pendingRsvps = data.guests.filter(g => g.rsvp === "pending").length;
+  const thisMonth = new Date().toISOString().slice(0,7);
+  const monthCount = data.events.filter(e => (e.date||"").slice(0,7) === thisMonth).length;
+
+  document.getElementById("stat-grid").innerHTML = `
+    <div class="rounded-xl p-3.5 bg-indigo-50 text-indigo-600"><p class="text-xs font-medium opacity-80">Upcoming Events</p><p class="text-2xl font-bold mt-1">${upcoming.length}</p></div>
+    <div class="rounded-xl p-3.5 bg-pink-50 text-pink-600"><p class="text-xs font-medium opacity-80">This Month</p><p class="text-2xl font-bold mt-1">${monthCount}</p></div>
+    <div class="rounded-xl p-3.5 bg-amber-50 text-amber-600"><p class="text-xs font-medium opacity-80">Guests Invited</p><p class="text-2xl font-bold mt-1">${data.guests.length}</p></div>
+    <div class="rounded-xl p-3.5 bg-emerald-50 text-emerald-600"><p class="text-xs font-medium opacity-80">Pending RSVPs</p><p class="text-2xl font-bold mt-1">${pendingRsvps}</p></div>
+  `;
+
+  const upDiv = document.getElementById("dash-upcoming");
+  upDiv.innerHTML = upcoming.length ? upcoming.slice(0,4).map(ev => `
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-lg bg-slate-100 flex items-center justify-center text-xl">${TYPE_EMOJI[ev.type]||"✨"}</div>
+      <div class="flex-1 min-w-0"><p class="font-semibold truncate">${esc(ev.name)}</p><p class="text-xs text-slate-400">${esc(ev.date)}</p></div>
+      <span class="pill bg-indigo-100 text-indigo-600">${esc(ev.type)}</span>
+    </div>`).join("") : `<p class="text-slate-400 text-sm py-2 text-center">No upcoming events — add one in the Events tab.</p>`;
+
+  // side guest list: most recent guests overall
+  const sideTbody = document.getElementById("side-guest-list");
+  const recentGuests = data.guests.slice(-5).reverse();
+  sideTbody.innerHTML = recentGuests.map(g => `<tr class="border-t border-slate-50"><td class="py-1 font-medium">${esc(fullName(g))}</td><td>${rsvpPill(g.rsvp)}</td></tr>`).join("");
+  document.getElementById("side-guest-empty").style.display = recentGuests.length ? "none" : "block";
+
+  // side event details: nearest upcoming
+  const next = upcoming[0];
+  const detailsDiv = document.getElementById("side-event-details");
+  if (next) {
+    const guestCount = data.guests.filter(g => g.eventId === next.id).length;
+    detailsDiv.innerHTML = `
+      <div class="flex justify-between"><span class="text-slate-400">Event</span><span class="font-medium">${esc(next.name)}</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">Date</span><span class="font-medium">${esc(next.date)}</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">Location</span><span class="font-medium">${esc(next.location)||"—"}</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">Budget</span><span class="font-medium">$${next.budget.toFixed(0)}</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">Guests</span><span class="font-medium">${guestCount}</span></div>`;
+  } else {
+    detailsDiv.innerHTML = `<p class="text-slate-400">No upcoming event yet.</p>`;
+  }
+}
+
+// ---------- calendar ----------
+let calDate = new Date();
+function shiftMonth(delta) { calDate.setMonth(calDate.getMonth() + delta); renderCalendar(); }
+function renderCalendar() {
+  const year = calDate.getFullYear(), month = calDate.getMonth();
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  document.getElementById("cal-label").textContent = `${monthNames[month]} ${year}`;
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const todayStr = new Date().toISOString().slice(0,10);
+  const eventDates = new Set(data.events.map(e => e.date));
+
+  let html = "";
+  for (let i = 0; i < firstDay; i++) html += `<span></span>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    let cls = "h-6 w-6 flex items-center justify-center mx-auto rounded-full";
+    if (dateStr === todayStr) cls += " bg-violet-600 text-white font-semibold";
+    else if (eventDates.has(dateStr)) cls += " bg-pink-500 text-white font-semibold";
+    html += `<span class="${cls}">${d}</span>`;
+  }
+  document.getElementById("cal-grid").innerHTML = html;
+}
+
+function renderAll() {
+  renderFamily();
+  renderEvents();
+  renderGuests();
+  renderBudget();
+  renderTravel();
+  renderDashboard();
+  renderCalendar();
+}
+renderAll();
+
+// ---------- AI chat widget ----------
+// Calls our own server function at /api/chat, which holds the real API key.
+// This only works once deployed on a host that runs serverless functions (e.g. Vercel)
+// with ANTHROPIC_API_KEY set in that project's environment variables.
+function toggleChat() {
+  const panel = document.getElementById("chat-panel");
+  const opening = panel.style.display === "none";
+  panel.style.display = opening ? "flex" : "none";
+  if (opening && !panel.dataset.greeted) {
+    addChatBubble("assistant", "Hi! I'm your FamEvent assistant. Ask me things like \"what's my next event\" or \"how many guests are still pending\".");
+    panel.dataset.greeted = "1";
+  }
+}
+function addChatBubble(role, text) {
+  const box = document.getElementById("chat-messages");
+  const bubble = document.createElement("div");
+  bubble.className = role === "user"
+    ? "self-end ml-auto max-w-[85%] bg-violet-600 text-white rounded-xl px-3 py-2"
+    : "max-w-[85%] bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700";
+  bubble.style.marginLeft = role === "user" ? "auto" : "0";
+  bubble.textContent = text;
+  box.appendChild(bubble);
+  box.scrollTop = box.scrollHeight;
+}
+function buildContextSnapshot() {
+  // A compact summary (not the entire raw data) so the assistant has enough to be useful.
+  return {
+    family: data.family.map(f => ({ name: fullName(f), relation: f.relation, birthday: f.birthday })),
+    events: data.events.map(e => ({ name: e.name, type: e.type, date: e.date, location: e.location, budget: e.budget })),
+    guests: data.guests.map(g => ({ name: fullName(g), event: eventById(g.eventId)?.name, rsvp: g.rsvp, people: g.people })),
+    budget: data.budget.map(b => ({ event: eventById(b.eventId)?.name, category: b.category, planned: b.planned, actual: b.actual })),
+    travel: data.travel.map(t => ({ event: eventById(t.eventId)?.name, traveler: t.traveler, mode: t.mode, arrival: t.arrival, departure: t.departure, hotel: t.hotel }))
+  };
+}
+async function sendChat() {
+  const input = document.getElementById("chat-input");
+  const message = input.value.trim();
+  if (!message) return;
+  addChatBubble("user", message);
+  input.value = "";
+  addChatBubble("assistant", "Thinking...");
+  const box = document.getElementById("chat-messages");
+  const thinkingBubble = box.lastChild;
+
+  try {
+    const resp = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ message, context: buildContextSnapshot() })
+    });
+    const result = await resp.json();
+    if (!resp.ok) {
+      thinkingBubble.textContent = "Chat isn't set up yet on this host — " + (result.error?.error?.message || result.error || "no /api/chat backend found. This only works once deployed to Vercel with an ANTHROPIC_API_KEY set.");
+      return;
+    }
+    thinkingBubble.textContent = result.reply;
+  } catch (err) {
+    thinkingBubble.textContent = "Couldn't reach the chat backend. This feature only works once deployed to a host that runs the /api/chat function (like Vercel) — it won't respond when opened as a plain file or on GitHub Pages.";
+  }
+}
+</script>
+
+</body>
+</html>
