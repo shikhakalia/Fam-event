@@ -6,11 +6,6 @@
 <title>FamEvent — Family Planning & Event Organization</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-<!-- flatpickr: only activated on mobile viewports, to replace the native date/datetime-local
-     picker there (it's been rendering as a blank/unlabeled box on some mobile browsers).
-     Desktop keeps the native <input type="date"> untouched. -->
-<link rel="stylesheet" href="vendor/flatpickr.min.css" />
-<script src="vendor/flatpickr.min.js"></script>
 <style>
   body { font-family: 'Inter', system-ui, sans-serif; background:#FFFBF5; }
   .pill { font-size:11px; font-weight:600; padding:4px 10px; border-radius:9999px; display:inline-block; }
@@ -20,8 +15,6 @@
   .panel.active { display:block; }
   input, select { outline:none; }
   input:focus, select:focus { border-color:#7c3aed !important; }
-  .flatpickr-day.selected, .flatpickr-day.selected:hover { background:#7c3aed; border-color:#7c3aed; }
-  .flatpickr-day.today { border-color:#7c3aed; }
 </style>
 </head>
 <body class="text-slate-800">
@@ -376,7 +369,7 @@ function addFamily() {
     relation: document.getElementById("fam-relation").value.trim(),
     birthday: document.getElementById("fam-birthday").value
   });
-  ["fam-first","fam-last","fam-relation","fam-birthday"].forEach(id => resetField(id));
+  ["fam-first","fam-last","fam-relation","fam-birthday"].forEach(id => document.getElementById(id).value = "");
   save();
 }
 function removeFamily(id) { data.family = data.family.filter(f => f.id !== id); save(); }
@@ -404,7 +397,7 @@ function addEvent() {
     budget: parseFloat(document.getElementById("ev-budget").value) || 0,
     description: document.getElementById("ev-desc").value.trim()
   });
-  ["ev-name","ev-date","ev-location","ev-budget","ev-desc"].forEach(id => resetField(id));
+  ["ev-name","ev-date","ev-location","ev-budget","ev-desc"].forEach(id => document.getElementById(id).value = "");
   save();
 }
 function removeEvent(id) {
@@ -560,7 +553,7 @@ function addTravel() {
     hotel: document.getElementById("tr-hotel").value.trim(),
     notes: document.getElementById("tr-notes").value.trim()
   });
-  ["tr-traveler","tr-details","tr-arrival","tr-departure","tr-hotel","tr-notes"].forEach(id => resetField(id));
+  ["tr-traveler","tr-details","tr-arrival","tr-departure","tr-hotel","tr-notes"].forEach(id => document.getElementById(id).value = "");
   save();
 }
 function removeTravel(id) { data.travel = data.travel.filter(t => t.id !== id); save(); }
@@ -709,36 +702,117 @@ function renderAll() {
 }
 renderAll();
 
-// ---------- mobile date picker ----------
+// ---------- mobile date picker (self-contained, no external library) ----------
 // Native date/datetime-local inputs render inconsistently on mobile (sometimes an
-// unlabeled blank box). Below the sm breakpoint, swap them for a flatpickr calendar
-// popup instead; desktop keeps the native picker completely untouched.
-const datePickers = {};
-if (window.matchMedia("(max-width: 639px)").matches && typeof flatpickr === "function") {
-  const dateFields = [
-    { id: "fam-birthday", opts: { dateFormat: "Y-m-d", altInput: true, altFormat: "M j, Y" } },
-    { id: "ev-date", opts: { dateFormat: "Y-m-d", altInput: true, altFormat: "M j, Y" } },
-    { id: "tr-arrival", opts: { enableTime: true, dateFormat: "Y-m-d\\TH:i", altInput: true, altFormat: "M j, Y h:i K" } },
-    { id: "tr-departure", opts: { enableTime: true, dateFormat: "Y-m-d\\TH:i", altInput: true, altFormat: "M j, Y h:i K" } }
-  ];
-  dateFields.forEach(({ id, opts }) => {
+// unlabeled blank box). Below the sm breakpoint, swap them for a small calendar popup
+// built from scratch here; desktop keeps the native <input type="date"> untouched.
+function pad2(n) { return String(n).padStart(2, "0"); }
+function parseIsoDateTime(str) {
+  if (!str) return new Date();
+  const [datePart, timePart] = str.split("T");
+  const [y, m, d] = datePart.split("-").map(Number);
+  if (!y || !m || !d) return new Date();
+  const dt = new Date(y, m - 1, d);
+  if (timePart) {
+    const [h, mi] = timePart.split(":").map(Number);
+    if (!isNaN(h)) dt.setHours(h);
+    if (!isNaN(mi)) dt.setMinutes(mi);
+  }
+  return dt;
+}
+function closeCalendarPopup() {
+  const pop = document.getElementById("mini-cal-popup");
+  if (pop) pop.remove();
+  document.removeEventListener("mousedown", calendarOutsideClick, true);
+}
+function calendarOutsideClick(e) {
+  const pop = document.getElementById("mini-cal-popup");
+  if (pop && !pop.contains(e.target)) closeCalendarPopup();
+}
+function openCalendarPopup(anchorEl, opts) {
+  closeCalendarPopup();
+  const initial = opts.initialDate;
+  let viewYear = initial.getFullYear();
+  let viewMonth = initial.getMonth();
+  let selDay = null, selHour = initial.getHours(), selMin = initial.getMinutes();
+
+  const pop = document.createElement("div");
+  pop.id = "mini-cal-popup";
+  pop.className = "fixed z-50 bg-white rounded-xl border border-slate-200 shadow-2xl p-3 text-sm";
+  pop.style.width = "260px";
+
+  function render() {
+    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    let daysHtml = "";
+    for (let i = 0; i < firstDay; i++) daysHtml += `<span></span>`;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const isSel = selDay === d;
+      daysHtml += `<button type="button" data-day="${d}" class="h-7 w-7 rounded-full text-xs ${isSel ? "bg-violet-600 text-white font-semibold" : "hover:bg-violet-50"}">${d}</button>`;
+    }
+    pop.innerHTML = `
+      <div class="flex items-center justify-between mb-2">
+        <button type="button" data-nav="-1" class="w-6 h-6 text-slate-500"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+        <span class="font-semibold text-xs">${monthNames[viewMonth]} ${viewYear}</span>
+        <button type="button" data-nav="1" class="w-6 h-6 text-slate-500"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+      </div>
+      <div class="grid grid-cols-7 text-center text-[10px] text-slate-400 mb-1">
+        <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+      </div>
+      <div class="grid grid-cols-7 gap-y-1 text-center">${daysHtml}</div>
+      ${opts.withTime ? `
+      <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
+        <span class="text-xs text-slate-500">Time</span>
+        <select data-hour class="border border-slate-200 rounded-md text-xs px-1 py-1">${Array.from({length:24},(_,h)=>`<option value="${h}" ${h===selHour?"selected":""}>${pad2(h)}</option>`).join("")}</select>
+        <span>:</span>
+        <select data-min class="border border-slate-200 rounded-md text-xs px-1 py-1">${Array.from({length:60},(_,m)=>`<option value="${m}" ${m===selMin?"selected":""}>${pad2(m)}</option>`).join("")}</select>
+      </div>` : ""}
+      <div class="flex justify-end gap-2 mt-3">
+        <button type="button" data-close class="text-xs text-slate-400 px-2 py-1">Cancel</button>
+        <button type="button" data-done class="text-xs bg-violet-600 text-white px-3 py-1 rounded-md font-semibold">Done</button>
+      </div>`;
+    pop.querySelectorAll("[data-day]").forEach(btn => {
+      btn.onclick = () => { selDay = parseInt(btn.dataset.day); render(); };
+    });
+    pop.querySelector('[data-nav="-1"]').onclick = () => { viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; } render(); };
+    pop.querySelector('[data-nav="1"]').onclick = () => { viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; } render(); };
+    if (opts.withTime) {
+      pop.querySelector("[data-hour]").onchange = e => selHour = parseInt(e.target.value);
+      pop.querySelector("[data-min]").onchange = e => selMin = parseInt(e.target.value);
+    }
+    pop.querySelector("[data-close]").onclick = closeCalendarPopup;
+    pop.querySelector("[data-done]").onclick = () => {
+      if (selDay == null) { closeCalendarPopup(); return; }
+      const dateStr = `${viewYear}-${pad2(viewMonth + 1)}-${pad2(selDay)}`;
+      opts.onSelect(opts.withTime ? `${dateStr}T${pad2(selHour)}:${pad2(selMin)}` : dateStr);
+      closeCalendarPopup();
+    };
+  }
+  render();
+  document.body.appendChild(pop);
+  const rect = anchorEl.getBoundingClientRect();
+  pop.style.top = `${Math.min(rect.bottom + 4, window.innerHeight - 340)}px`;
+  pop.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - 276))}px`;
+  setTimeout(() => document.addEventListener("mousedown", calendarOutsideClick, true), 0);
+}
+if (window.matchMedia("(max-width: 639px)").matches) {
+  [
+    { id: "fam-birthday", withTime: false },
+    { id: "ev-date", withTime: false },
+    { id: "tr-arrival", withTime: true },
+    { id: "tr-departure", withTime: true }
+  ].forEach(({ id, withTime }) => {
     const el = document.getElementById(id);
     if (!el) return;
-    const originalType = el.type;
-    try {
-      el.type = "text";
-      datePickers[id] = flatpickr(el, opts);
-    } catch (err) {
-      el.type = originalType;
-      delete datePickers[id];
-    }
+    el.type = "text";
+    el.readOnly = true;
+    el.placeholder = withTime ? "mm/dd/yyyy --:--" : "mm/dd/yyyy";
+    el.addEventListener("click", () => {
+      openCalendarPopup(el, { withTime, initialDate: parseIsoDateTime(el.value), onSelect: value => { el.value = value; } });
+    });
   });
 }
-function resetField(id) {
-  if (datePickers[id]) { datePickers[id].clear(); return; }
-  document.getElementById(id).value = "";
-}
-
 // ---------- AI chat widget ----------
 // Calls our own server function at /api/chat, which holds the real API key.
 // This only works once deployed on a host that runs serverless functions (e.g. Vercel)
