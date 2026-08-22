@@ -9,8 +9,8 @@
 <!-- flatpickr: only activated on mobile viewports, to replace the native date/datetime-local
      picker there (it's been rendering as a blank/unlabeled box on some mobile browsers).
      Desktop keeps the native <input type="date"> untouched. -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<link rel="stylesheet" href="vendor/flatpickr.min.css" />
+<script src="vendor/flatpickr.min.js"></script>
 <style>
   body { font-family: 'Inter', system-ui, sans-serif; background:#FFFBF5; }
   .pill { font-size:11px; font-weight:600; padding:4px 10px; border-radius:9999px; display:inline-block; }
@@ -714,7 +714,7 @@ renderAll();
 // unlabeled blank box). Below the sm breakpoint, swap them for a flatpickr calendar
 // popup instead; desktop keeps the native picker completely untouched.
 const datePickers = {};
-if (window.matchMedia("(max-width: 639px)").matches) {
+if (window.matchMedia("(max-width: 639px)").matches && typeof flatpickr === "function") {
   const dateFields = [
     { id: "fam-birthday", opts: { dateFormat: "Y-m-d", altInput: true, altFormat: "M j, Y" } },
     { id: "ev-date", opts: { dateFormat: "Y-m-d", altInput: true, altFormat: "M j, Y" } },
@@ -724,8 +724,14 @@ if (window.matchMedia("(max-width: 639px)").matches) {
   dateFields.forEach(({ id, opts }) => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.type = "text";
-    datePickers[id] = flatpickr(el, opts);
+    const originalType = el.type;
+    try {
+      el.type = "text";
+      datePickers[id] = flatpickr(el, opts);
+    } catch (err) {
+      el.type = originalType;
+      delete datePickers[id];
+    }
   });
 }
 function resetField(id) {
