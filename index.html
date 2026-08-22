@@ -320,6 +320,12 @@ function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); rende
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 const TYPE_EMOJI = { Birthday:"🎂", Wedding:"💍", "Baby Shower":"🍼", Graduation:"🎓", Anniversary:"💐", "Family Reunion":"👨‍👩‍👧‍👦", "Holiday Party":"🎄", Dinner:"🍽️", Conference:"🎤", "Association Event":"🏛️", Other:"✨" };
+// Some mobile browsers can't render the ZWJ/complex emoji above and show a blank box instead —
+// this FA icon is a same-meaning fallback shown only below the sm breakpoint (mobile stays legible; desktop is untouched).
+const TYPE_ICON = { Birthday:"fa-cake-candles", Wedding:"fa-ring", "Baby Shower":"fa-baby", Graduation:"fa-graduation-cap", Anniversary:"fa-heart", "Family Reunion":"fa-people-roof", "Holiday Party":"fa-tree", Dinner:"fa-utensils", Conference:"fa-microphone", "Association Event":"fa-landmark", Other:"fa-star" };
+function eventIcon(type) {
+  return `<i class="fa-solid ${TYPE_ICON[type] || "fa-star"} sm:hidden text-slate-500 text-base"></i><span class="hidden sm:inline">${TYPE_EMOJI[type] || "✨"}</span>`;
+}
 const THEMES = [
   { key: "pastel", name: "Pastel Dream", gradient: "from-pink-200 via-rose-100 to-amber-100" },
   { key: "royal", name: "Royal Elegance", gradient: "from-rose-200 via-amber-100 to-emerald-100" },
@@ -405,7 +411,7 @@ function renderEvents() {
     const div = document.createElement("div");
     div.className = "flex items-center gap-3";
     div.innerHTML = `
-      <div class="w-11 h-11 rounded-lg bg-slate-100 flex items-center justify-center text-xl">${TYPE_EMOJI[ev.type] || "✨"}</div>
+      <div class="w-11 h-11 rounded-lg bg-slate-100 flex items-center justify-center text-xl" title="${esc(ev.type)}">${eventIcon(ev.type)}</div>
       <div class="flex-1 min-w-0"><p class="font-semibold truncate">${esc(ev.name)}</p><p class="text-xs text-slate-400">${esc(ev.date)||"no date set"} · ${esc(ev.location)||"no location"} · budget $${ev.budget.toFixed(0)}</p></div>
       <span class="pill bg-indigo-100 text-indigo-600">${esc(ev.type)}</span>
       <button onclick="removeEvent('${ev.id}')" class="text-slate-400 hover:text-rose-500 text-xs font-semibold ml-2">remove</button>`;
@@ -629,7 +635,7 @@ function renderDashboard() {
   const upDiv = document.getElementById("dash-upcoming");
   upDiv.innerHTML = upcoming.length ? upcoming.slice(0,4).map(ev => `
     <div class="flex items-center gap-3">
-      <div class="w-11 h-11 rounded-lg bg-slate-100 flex items-center justify-center text-xl">${TYPE_EMOJI[ev.type]||"✨"}</div>
+      <div class="w-11 h-11 rounded-lg bg-slate-100 flex items-center justify-center text-xl" title="${esc(ev.type)}">${eventIcon(ev.type)}</div>
       <div class="flex-1 min-w-0"><p class="font-semibold truncate">${esc(ev.name)}</p><p class="text-xs text-slate-400">${esc(ev.date)}</p></div>
       <span class="pill bg-indigo-100 text-indigo-600">${esc(ev.type)}</span>
     </div>`).join("") : `<p class="text-slate-400 text-sm py-2 text-center">No upcoming events — add one in the Events tab.</p>`;
