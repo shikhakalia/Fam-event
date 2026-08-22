@@ -117,6 +117,7 @@
           <input id="fam-first" placeholder="First name" class="flex-1 min-w-[120px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
           <input id="fam-last" placeholder="Last name" class="flex-1 min-w-[120px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
           <input id="fam-relation" placeholder="Relation" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <label for="fam-birthday" class="w-full sm:hidden text-xs text-slate-400 -mb-1">Birthday</label>
           <input id="fam-birthday" type="date" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
           <button onclick="addFamily()" class="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700">Add</button>
         </div>
@@ -145,6 +146,7 @@
           </select>
         </div>
         <div class="flex flex-wrap gap-2 mb-2">
+          <label for="ev-date" class="w-full sm:hidden text-xs text-slate-400 -mb-1">Event date</label>
           <input id="ev-date" type="date" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
           <input id="ev-location" placeholder="Location" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
           <input id="ev-budget" type="number" placeholder="Budget $" class="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm">
@@ -225,7 +227,9 @@
           <input id="tr-details" placeholder="Flight # / route / details" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
         </div>
         <div class="flex flex-wrap gap-2 mb-2">
+          <label for="tr-arrival" class="w-full sm:hidden text-xs text-slate-400 -mb-1">Arrival</label>
           <input id="tr-arrival" type="datetime-local" class="px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="Arrival">
+          <label for="tr-departure" class="w-full sm:hidden text-xs text-slate-400 -mb-1">Departure</label>
           <input id="tr-departure" type="datetime-local" class="px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="Departure">
           <input id="tr-hotel" placeholder="Hotel / accommodation" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
         </div>
