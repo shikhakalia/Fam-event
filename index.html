@@ -6,6 +6,11 @@
 <title>FamEvent — Family Planning & Event Organization</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<!-- flatpickr: only activated on mobile viewports, to replace the native date/datetime-local
+     picker there (it's been rendering as a blank/unlabeled box on some mobile browsers).
+     Desktop keeps the native <input type="date"> untouched. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <style>
   body { font-family: 'Inter', system-ui, sans-serif; background:#FFFBF5; }
   .pill { font-size:11px; font-weight:600; padding:4px 10px; border-radius:9999px; display:inline-block; }
@@ -15,6 +20,8 @@
   .panel.active { display:block; }
   input, select { outline:none; }
   input:focus, select:focus { border-color:#7c3aed !important; }
+  .flatpickr-day.selected, .flatpickr-day.selected:hover { background:#7c3aed; border-color:#7c3aed; }
+  .flatpickr-day.today { border-color:#7c3aed; }
 </style>
 </head>
 <body class="text-slate-800">
@@ -369,7 +376,7 @@ function addFamily() {
     relation: document.getElementById("fam-relation").value.trim(),
     birthday: document.getElementById("fam-birthday").value
   });
-  ["fam-first","fam-last","fam-relation","fam-birthday"].forEach(id => document.getElementById(id).value = "");
+  ["fam-first","fam-last","fam-relation","fam-birthday"].forEach(id => resetField(id));
   save();
 }
 function removeFamily(id) { data.family = data.family.filter(f => f.id !== id); save(); }
@@ -397,7 +404,7 @@ function addEvent() {
     budget: parseFloat(document.getElementById("ev-budget").value) || 0,
     description: document.getElementById("ev-desc").value.trim()
   });
-  ["ev-name","ev-date","ev-location","ev-budget","ev-desc"].forEach(id => document.getElementById(id).value = "");
+  ["ev-name","ev-date","ev-location","ev-budget","ev-desc"].forEach(id => resetField(id));
   save();
 }
 function removeEvent(id) {
@@ -553,7 +560,7 @@ function addTravel() {
     hotel: document.getElementById("tr-hotel").value.trim(),
     notes: document.getElementById("tr-notes").value.trim()
   });
-  ["tr-traveler","tr-details","tr-arrival","tr-departure","tr-hotel","tr-notes"].forEach(id => document.getElementById(id).value = "");
+  ["tr-traveler","tr-details","tr-arrival","tr-departure","tr-hotel","tr-notes"].forEach(id => resetField(id));
   save();
 }
 function removeTravel(id) { data.travel = data.travel.filter(t => t.id !== id); save(); }
@@ -701,6 +708,30 @@ function renderAll() {
   renderCalendar();
 }
 renderAll();
+
+// ---------- mobile date picker ----------
+// Native date/datetime-local inputs render inconsistently on mobile (sometimes an
+// unlabeled blank box). Below the sm breakpoint, swap them for a flatpickr calendar
+// popup instead; desktop keeps the native picker completely untouched.
+const datePickers = {};
+if (window.matchMedia("(max-width: 639px)").matches) {
+  const dateFields = [
+    { id: "fam-birthday", opts: { dateFormat: "Y-m-d", altInput: true, altFormat: "M j, Y" } },
+    { id: "ev-date", opts: { dateFormat: "Y-m-d", altInput: true, altFormat: "M j, Y" } },
+    { id: "tr-arrival", opts: { enableTime: true, dateFormat: "Y-m-d\\TH:i", altInput: true, altFormat: "M j, Y h:i K" } },
+    { id: "tr-departure", opts: { enableTime: true, dateFormat: "Y-m-d\\TH:i", altInput: true, altFormat: "M j, Y h:i K" } }
+  ];
+  dateFields.forEach(({ id, opts }) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.type = "text";
+    datePickers[id] = flatpickr(el, opts);
+  });
+}
+function resetField(id) {
+  if (datePickers[id]) { datePickers[id].clear(); return; }
+  document.getElementById(id).value = "";
+}
 
 // ---------- AI chat widget ----------
 // Calls our own server function at /api/chat, which holds the real API key.
