@@ -19,6 +19,42 @@
 </head>
 <body class="text-slate-800">
 
+<!-- ACCOUNT BAR -->
+<div class="max-w-7xl mx-auto px-6 pt-4 flex justify-end">
+  <div id="account-guest" class="flex items-center gap-2">
+    <button onclick="openAuthModal('signin')" class="text-sm font-semibold text-violet-600 hover:text-violet-700 px-2 py-1.5">Sign In</button>
+    <button onclick="openAuthModal('signup')" class="text-sm font-semibold bg-violet-600 text-white px-3 py-1.5 rounded-lg hover:bg-violet-700">Sign Up</button>
+  </div>
+  <div id="account-user" class="hidden items-center gap-3">
+    <span class="text-sm text-slate-600">Welcome, <span id="account-name" class="font-semibold"></span></span>
+    <button onclick="logout()" class="text-sm font-semibold text-slate-400 hover:text-rose-500">Log out</button>
+  </div>
+</div>
+
+<!-- AUTH MODAL (Sign Up / Sign In) -->
+<div id="auth-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative">
+    <button type="button" onclick="closeAuthModal()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+    <h3 class="text-xl font-bold mb-1" id="auth-title">Create your account</h3>
+    <p class="text-sm text-slate-500 mb-4" id="auth-subtitle">Save your family's plans to your own account.</p>
+
+    <div id="auth-error" class="hidden text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2 mb-3"></div>
+
+    <form id="auth-form" onsubmit="submitAuth(event)" class="space-y-3">
+      <input id="auth-fullname" placeholder="Full name" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+      <input id="auth-email" type="email" placeholder="Email" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+      <input id="auth-password" type="password" placeholder="Password" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+      <input id="auth-confirm" type="password" placeholder="Confirm password" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+      <button type="submit" id="auth-submit" class="w-full bg-violet-600 text-white font-semibold py-2 rounded-lg hover:bg-violet-700">Create account</button>
+    </form>
+
+    <p class="text-xs text-slate-400 mt-4 text-center">
+      <span id="auth-toggle-text">Already have an account?</span>
+      <button type="button" onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-violet-600 font-semibold">Sign in</button>
+    </p>
+  </div>
+</div>
+
 <!-- HERO -->
 <header class="max-w-7xl mx-auto px-6 pt-10 pb-6 text-center">
   <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">All-in-One Platform for</h1>
@@ -836,6 +872,105 @@ function renderAll() {
   renderCalendar();
 }
 renderAll();
+
+// ---------- account (sign up / sign in) ----------
+// Talks to /api/auth/*, which only runs once deployed on a host that runs serverless
+// functions (e.g. Vercel) with SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and SESSION_SECRET
+// set in that project's environment variables. The session itself is a plain httpOnly
+// cookie set by the server — nothing about it is stored in localStorage.
+let authMode = "signup";
+function openAuthModal(mode) {
+  authMode = mode;
+  document.getElementById("auth-error").classList.add("hidden");
+  document.getElementById("auth-form").reset();
+  applyAuthMode();
+  document.getElementById("auth-modal").classList.remove("hidden");
+  document.getElementById("auth-modal").classList.add("flex");
+}
+function closeAuthModal() {
+  document.getElementById("auth-modal").classList.add("hidden");
+  document.getElementById("auth-modal").classList.remove("flex");
+}
+function toggleAuthMode() {
+  authMode = authMode === "signup" ? "signin" : "signup";
+  document.getElementById("auth-error").classList.add("hidden");
+  applyAuthMode();
+}
+function applyAuthMode() {
+  const isSignup = authMode === "signup";
+  document.getElementById("auth-title").textContent = isSignup ? "Create your account" : "Welcome back";
+  document.getElementById("auth-subtitle").textContent = isSignup ? "Save your family's plans to your own account." : "Sign in to your FamEvent account.";
+  document.getElementById("auth-fullname").classList.toggle("hidden", !isSignup);
+  document.getElementById("auth-confirm").classList.toggle("hidden", !isSignup);
+  document.getElementById("auth-submit").textContent = isSignup ? "Create account" : "Sign in";
+  document.getElementById("auth-toggle-text").textContent = isSignup ? "Already have an account?" : "Don't have an account?";
+  document.getElementById("auth-toggle-btn").textContent = isSignup ? "Sign in" : "Sign up";
+}
+function showAuthError(message) {
+  const el = document.getElementById("auth-error");
+  el.textContent = message;
+  el.classList.remove("hidden");
+}
+async function submitAuth(evt) {
+  evt.preventDefault();
+  const email = document.getElementById("auth-email").value.trim();
+  const password = document.getElementById("auth-password").value;
+  const isSignup = authMode === "signup";
+
+  if (isSignup) {
+    const fullName = document.getElementById("auth-fullname").value.trim();
+    const confirm = document.getElementById("auth-confirm").value;
+    if (!fullName) { showAuthError("Enter your full name."); return; }
+    if (password !== confirm) { showAuthError("Passwords don't match."); return; }
+  }
+
+  try {
+    const resp = await fetch(isSignup ? "/api/auth/register" : "/api/auth/login", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify(isSignup
+        ? { fullName: document.getElementById("auth-fullname").value.trim(), email, password }
+        : { email, password })
+    });
+    const result = await resp.json();
+    if (!resp.ok) {
+      showAuthError(result.error || "Something went wrong. Please try again.");
+      return;
+    }
+    closeAuthModal();
+    showLoggedIn(result.user);
+  } catch (err) {
+    showAuthError("Accounts aren't set up on this host yet — this only works once deployed with a database connected (see api/auth/*.js).");
+  }
+}
+function showLoggedIn(user) {
+  document.getElementById("account-guest").classList.add("hidden");
+  document.getElementById("account-user").classList.remove("hidden");
+  document.getElementById("account-user").classList.add("flex");
+  document.getElementById("account-name").textContent = user.fullName;
+}
+function showLoggedOut() {
+  document.getElementById("account-user").classList.add("hidden");
+  document.getElementById("account-user").classList.remove("flex");
+  document.getElementById("account-guest").classList.remove("hidden");
+}
+async function logout() {
+  try {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+  } catch (err) {}
+  showLoggedOut();
+}
+(async function checkSession() {
+  try {
+    const resp = await fetch("/api/auth/me", { credentials: "same-origin" });
+    if (!resp.ok) return;
+    const result = await resp.json();
+    showLoggedIn(result.user);
+  } catch (err) {
+    // No backend on this host (e.g. local static preview) — stay logged out silently.
+  }
+})();
 
 // ---------- AI chat widget ----------
 // Calls our own server function at /api/chat, which holds the real API key.
