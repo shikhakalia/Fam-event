@@ -117,8 +117,7 @@
           <input id="fam-first" placeholder="First name" class="flex-1 min-w-[120px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
           <input id="fam-last" placeholder="Last name" class="flex-1 min-w-[120px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
           <input id="fam-relation" placeholder="Relation" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
-          <label for="fam-birthday" class="w-full sm:hidden text-xs text-slate-400 -mb-1">Birthday</label>
-          <input id="fam-birthday" type="date" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <input id="fam-birthday" type="text" readonly placeholder="MM/DD/YY" onclick="openDatePicker('fam-birthday', event)" class="px-3 py-2 border border-slate-200 rounded-lg text-sm cursor-pointer bg-white">
           <button onclick="addFamily()" class="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700">Add</button>
         </div>
       </div>
@@ -146,8 +145,7 @@
           </select>
         </div>
         <div class="flex flex-wrap gap-2 mb-2">
-          <label for="ev-date" class="w-full sm:hidden text-xs text-slate-400 -mb-1">Event date</label>
-          <input id="ev-date" type="date" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <input id="ev-date" type="text" readonly placeholder="MM/DD/YY" onclick="openDatePicker('ev-date', event)" class="px-3 py-2 border border-slate-200 rounded-lg text-sm cursor-pointer bg-white">
           <input id="ev-location" placeholder="Location" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
           <input id="ev-budget" type="number" placeholder="Budget $" class="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm">
         </div>
@@ -227,10 +225,8 @@
           <input id="tr-details" placeholder="Flight # / route / details" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
         </div>
         <div class="flex flex-wrap gap-2 mb-2">
-          <label for="tr-arrival" class="w-full sm:hidden text-xs text-slate-400 -mb-1">Arrival</label>
-          <input id="tr-arrival" type="datetime-local" class="px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="Arrival">
-          <label for="tr-departure" class="w-full sm:hidden text-xs text-slate-400 -mb-1">Departure</label>
-          <input id="tr-departure" type="datetime-local" class="px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="Departure">
+          <input id="tr-arrival" type="text" readonly placeholder="MM/DD/YY --:--" onclick="openDatePicker('tr-arrival', event)" class="px-3 py-2 border border-slate-200 rounded-lg text-sm cursor-pointer bg-white">
+          <input id="tr-departure" type="text" readonly placeholder="MM/DD/YY --:--" onclick="openDatePicker('tr-departure', event)" class="px-3 py-2 border border-slate-200 rounded-lg text-sm cursor-pointer bg-white">
           <input id="tr-hotel" placeholder="Hotel / accommodation" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
         </div>
         <div class="flex flex-wrap gap-2">
@@ -286,6 +282,30 @@
 </main>
 
 <!-- FOOTER -->
+<!-- SHARED DATE PICKER (used for every date field so it looks identical on every browser/OS) -->
+<div id="dp-popup" class="hidden fixed z-50 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-64">
+  <div class="flex items-center justify-between mb-2 text-sm font-semibold text-slate-700">
+    <i class="fa-solid fa-chevron-left text-xs cursor-pointer px-1" onclick="dpShiftMonth(-1)"></i>
+    <span id="dp-label"></span>
+    <i class="fa-solid fa-chevron-right text-xs cursor-pointer px-1" onclick="dpShiftMonth(1)"></i>
+  </div>
+  <div class="grid grid-cols-7 text-center text-[10px] font-semibold text-slate-400 mb-1">
+    <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+  </div>
+  <div class="grid grid-cols-7 gap-y-1 text-center text-xs" id="dp-grid"></div>
+  <div id="dp-time" class="hidden items-center gap-2 mt-2 pt-2 border-t border-slate-100 text-xs">
+    <span class="text-slate-500">Time</span>
+    <select id="dp-hour" class="border border-slate-200 rounded-md px-1 py-1"></select>
+    <span>:</span>
+    <select id="dp-min" class="border border-slate-200 rounded-md px-1 py-1"></select>
+  </div>
+  <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-100">
+    <button type="button" onclick="dpToday()" class="text-xs text-violet-600 font-semibold">Today</button>
+    <button type="button" onclick="dpClear()" class="text-xs text-slate-400 font-semibold">Clear</button>
+    <button type="button" id="dp-done" onclick="dpDone()" class="hidden text-xs bg-violet-600 text-white px-2 py-1 rounded-md font-semibold">Done</button>
+  </div>
+</div>
+
 <!-- AI CHAT WIDGET -->
 <button id="chat-fab" onclick="toggleChat()" class="fixed bottom-5 right-5 w-14 h-14 rounded-full bg-violet-600 text-white shadow-lg flex items-center justify-center text-xl hover:bg-violet-700 z-40">
   <i class="fa-solid fa-comment-dots"></i>
@@ -367,9 +387,11 @@ function addFamily() {
     firstName,
     lastName: document.getElementById("fam-last").value.trim(),
     relation: document.getElementById("fam-relation").value.trim(),
-    birthday: document.getElementById("fam-birthday").value
+    birthday: document.getElementById("fam-birthday").dataset.iso || ""
   });
-  ["fam-first","fam-last","fam-relation","fam-birthday"].forEach(id => document.getElementById(id).value = "");
+  ["fam-first","fam-last","fam-relation"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("fam-birthday").value = "";
+  document.getElementById("fam-birthday").dataset.iso = "";
   save();
 }
 function removeFamily(id) { data.family = data.family.filter(f => f.id !== id); save(); }
@@ -392,12 +414,14 @@ function addEvent() {
   if (!name) return;
   data.events.push({
     id: uid(), name, type: document.getElementById("ev-type").value,
-    date: document.getElementById("ev-date").value,
+    date: document.getElementById("ev-date").dataset.iso || "",
     location: document.getElementById("ev-location").value.trim(),
     budget: parseFloat(document.getElementById("ev-budget").value) || 0,
     description: document.getElementById("ev-desc").value.trim()
   });
-  ["ev-name","ev-date","ev-location","ev-budget","ev-desc"].forEach(id => document.getElementById(id).value = "");
+  ["ev-name","ev-location","ev-budget","ev-desc"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("ev-date").value = "";
+  document.getElementById("ev-date").dataset.iso = "";
   save();
 }
 function removeEvent(id) {
@@ -548,12 +572,13 @@ function addTravel() {
     id: uid(), eventId, traveler,
     mode: document.getElementById("tr-mode").value,
     details: document.getElementById("tr-details").value.trim(),
-    arrival: document.getElementById("tr-arrival").value,
-    departure: document.getElementById("tr-departure").value,
+    arrival: document.getElementById("tr-arrival").dataset.iso || "",
+    departure: document.getElementById("tr-departure").dataset.iso || "",
     hotel: document.getElementById("tr-hotel").value.trim(),
     notes: document.getElementById("tr-notes").value.trim()
   });
-  ["tr-traveler","tr-details","tr-arrival","tr-departure","tr-hotel","tr-notes"].forEach(id => document.getElementById(id).value = "");
+  ["tr-traveler","tr-details","tr-hotel","tr-notes"].forEach(id => document.getElementById(id).value = "");
+  ["tr-arrival","tr-departure"].forEach(id => { document.getElementById(id).value = ""; document.getElementById(id).dataset.iso = ""; });
   save();
 }
 function removeTravel(id) { data.travel = data.travel.filter(t => t.id !== id); save(); }
@@ -666,6 +691,116 @@ function renderDashboard() {
   }
 }
 
+// ---------- shared date picker (consistent look on every browser/OS) ----------
+// Every date/datetime field in the app (birthday, event date, travel arrival/departure)
+// uses this one picker instead of the native <input type="date">/"datetime-local">, so it
+// looks and behaves identically regardless of browser or platform.
+const DP_TIME_FIELDS = ["tr-arrival", "tr-departure"];
+let dpTargetId = null;
+let dpDate = new Date();
+let dpWithTime = false;
+let dpPendingIso = null;
+function pad2(n) { return String(n).padStart(2, "0"); }
+function isoFromParts(y, m, d) { return `${y}-${pad2(m + 1)}-${pad2(d)}`; }
+function formatDateDisplay(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${pad2(m)}/${pad2(d)}/${String(y).slice(-2)}`;
+}
+function formatDateTimeDisplay(iso) {
+  if (!iso) return "";
+  const [datePart, timePart] = iso.split("T");
+  return timePart ? `${formatDateDisplay(datePart)} ${timePart}` : formatDateDisplay(datePart);
+}
+function populateTimeSelects(h, mi) {
+  document.getElementById("dp-hour").innerHTML = Array.from({ length: 24 }, (_, i) => `<option value="${i}" ${i === h ? "selected" : ""}>${pad2(i)}</option>`).join("");
+  document.getElementById("dp-min").innerHTML = Array.from({ length: 60 }, (_, i) => `<option value="${i}" ${i === mi ? "selected" : ""}>${pad2(i)}</option>`).join("");
+}
+function openDatePicker(inputId, evt) {
+  evt.stopPropagation();
+  dpTargetId = inputId;
+  dpWithTime = DP_TIME_FIELDS.includes(inputId);
+  const input = document.getElementById(inputId);
+  const existingIso = input.dataset.iso || "";
+  const [datePart, timePart] = existingIso.split("T");
+  dpDate = datePart ? new Date(datePart + "T00:00:00") : new Date();
+  dpPendingIso = datePart || null;
+  document.getElementById("dp-time").classList.toggle("hidden", !dpWithTime);
+  document.getElementById("dp-time").classList.toggle("flex", dpWithTime);
+  document.getElementById("dp-done").classList.toggle("hidden", !dpWithTime);
+  if (dpWithTime) {
+    const [h, mi] = (timePart || "00:00").split(":").map(Number);
+    populateTimeSelects(h || 0, mi || 0);
+  }
+  renderDatePicker();
+  const popup = document.getElementById("dp-popup");
+  const rect = input.getBoundingClientRect();
+  popup.style.top = (rect.bottom + 6) + "px";
+  popup.style.left = Math.min(rect.left, window.innerWidth - 270) + "px";
+  popup.classList.remove("hidden");
+}
+function dpShiftMonth(delta) { dpDate.setMonth(dpDate.getMonth() + delta); renderDatePicker(); }
+function dpApply(iso) {
+  const input = document.getElementById(dpTargetId);
+  input.dataset.iso = iso;
+  input.value = dpWithTime ? formatDateTimeDisplay(iso) : formatDateDisplay(iso);
+  document.getElementById("dp-popup").classList.add("hidden");
+}
+function dpSelect(y, m, d) {
+  const iso = isoFromParts(y, m, d);
+  if (dpWithTime) { dpPendingIso = iso; renderDatePicker(); return; }
+  dpApply(iso);
+}
+function dpDone() {
+  if (!dpPendingIso) { document.getElementById("dp-popup").classList.add("hidden"); return; }
+  const h = pad2(document.getElementById("dp-hour").value);
+  const mi = pad2(document.getElementById("dp-min").value);
+  dpApply(`${dpPendingIso}T${h}:${mi}`);
+}
+function dpToday() {
+  const now = new Date();
+  dpDate = now;
+  if (dpWithTime) {
+    dpPendingIso = isoFromParts(now.getFullYear(), now.getMonth(), now.getDate());
+    populateTimeSelects(now.getHours(), now.getMinutes());
+    renderDatePicker();
+  } else {
+    dpSelect(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+}
+function dpClear() {
+  const input = document.getElementById(dpTargetId);
+  input.dataset.iso = "";
+  input.value = "";
+  document.getElementById("dp-popup").classList.add("hidden");
+}
+function renderDatePicker() {
+  const year = dpDate.getFullYear(), month = dpDate.getMonth();
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  document.getElementById("dp-label").textContent = `${monthNames[month]} ${year}`;
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const selectedIso = dpWithTime ? (dpPendingIso || "") : (document.getElementById(dpTargetId)?.dataset.iso || "");
+  let html = "";
+  for (let i = 0; i < firstDay; i++) html += `<span></span>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const iso = isoFromParts(year, month, d);
+    let cls = "h-6 w-6 flex items-center justify-center mx-auto rounded-full cursor-pointer hover:bg-violet-100";
+    if (iso === selectedIso) cls += " bg-violet-600 text-white font-semibold hover:bg-violet-600";
+    else if (iso === todayStr) cls += " border border-violet-400 font-semibold";
+    html += `<span class="${cls}" onclick="dpSelect(${year},${month},${d})">${d}</span>`;
+  }
+  document.getElementById("dp-grid").innerHTML = html;
+}
+const DP_TRIGGER_IDS = ["fam-birthday", "ev-date", "tr-arrival", "tr-departure"];
+document.addEventListener("click", (e) => {
+  const popup = document.getElementById("dp-popup");
+  if (!popup.classList.contains("hidden") && !popup.contains(e.target) && !DP_TRIGGER_IDS.includes(e.target.id)) {
+    popup.classList.add("hidden");
+  }
+});
+
 // ---------- calendar ----------
 let calDate = new Date();
 function shiftMonth(delta) { calDate.setMonth(calDate.getMonth() + delta); renderCalendar(); }
@@ -702,117 +837,6 @@ function renderAll() {
 }
 renderAll();
 
-// ---------- mobile date picker (self-contained, no external library) ----------
-// Native date/datetime-local inputs render inconsistently on mobile (sometimes an
-// unlabeled blank box). Below the sm breakpoint, swap them for a small calendar popup
-// built from scratch here; desktop keeps the native <input type="date"> untouched.
-function pad2(n) { return String(n).padStart(2, "0"); }
-function parseIsoDateTime(str) {
-  if (!str) return new Date();
-  const [datePart, timePart] = str.split("T");
-  const [y, m, d] = datePart.split("-").map(Number);
-  if (!y || !m || !d) return new Date();
-  const dt = new Date(y, m - 1, d);
-  if (timePart) {
-    const [h, mi] = timePart.split(":").map(Number);
-    if (!isNaN(h)) dt.setHours(h);
-    if (!isNaN(mi)) dt.setMinutes(mi);
-  }
-  return dt;
-}
-function closeCalendarPopup() {
-  const pop = document.getElementById("mini-cal-popup");
-  if (pop) pop.remove();
-  document.removeEventListener("mousedown", calendarOutsideClick, true);
-}
-function calendarOutsideClick(e) {
-  const pop = document.getElementById("mini-cal-popup");
-  if (pop && !pop.contains(e.target)) closeCalendarPopup();
-}
-function openCalendarPopup(anchorEl, opts) {
-  closeCalendarPopup();
-  const initial = opts.initialDate;
-  let viewYear = initial.getFullYear();
-  let viewMonth = initial.getMonth();
-  let selDay = null, selHour = initial.getHours(), selMin = initial.getMinutes();
-
-  const pop = document.createElement("div");
-  pop.id = "mini-cal-popup";
-  pop.className = "fixed z-50 bg-white rounded-xl border border-slate-200 shadow-2xl p-3 text-sm";
-  pop.style.width = "260px";
-
-  function render() {
-    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-    const firstDay = new Date(viewYear, viewMonth, 1).getDay();
-    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-    let daysHtml = "";
-    for (let i = 0; i < firstDay; i++) daysHtml += `<span></span>`;
-    for (let d = 1; d <= daysInMonth; d++) {
-      const isSel = selDay === d;
-      daysHtml += `<button type="button" data-day="${d}" class="h-7 w-7 rounded-full text-xs ${isSel ? "bg-violet-600 text-white font-semibold" : "hover:bg-violet-50"}">${d}</button>`;
-    }
-    pop.innerHTML = `
-      <div class="flex items-center justify-between mb-2">
-        <button type="button" data-nav="-1" class="w-6 h-6 text-slate-500"><i class="fa-solid fa-chevron-left text-xs"></i></button>
-        <span class="font-semibold text-xs">${monthNames[viewMonth]} ${viewYear}</span>
-        <button type="button" data-nav="1" class="w-6 h-6 text-slate-500"><i class="fa-solid fa-chevron-right text-xs"></i></button>
-      </div>
-      <div class="grid grid-cols-7 text-center text-[10px] text-slate-400 mb-1">
-        <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-      </div>
-      <div class="grid grid-cols-7 gap-y-1 text-center">${daysHtml}</div>
-      ${opts.withTime ? `
-      <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
-        <span class="text-xs text-slate-500">Time</span>
-        <select data-hour class="border border-slate-200 rounded-md text-xs px-1 py-1">${Array.from({length:24},(_,h)=>`<option value="${h}" ${h===selHour?"selected":""}>${pad2(h)}</option>`).join("")}</select>
-        <span>:</span>
-        <select data-min class="border border-slate-200 rounded-md text-xs px-1 py-1">${Array.from({length:60},(_,m)=>`<option value="${m}" ${m===selMin?"selected":""}>${pad2(m)}</option>`).join("")}</select>
-      </div>` : ""}
-      <div class="flex justify-end gap-2 mt-3">
-        <button type="button" data-close class="text-xs text-slate-400 px-2 py-1">Cancel</button>
-        <button type="button" data-done class="text-xs bg-violet-600 text-white px-3 py-1 rounded-md font-semibold">Done</button>
-      </div>`;
-    pop.querySelectorAll("[data-day]").forEach(btn => {
-      btn.onclick = () => { selDay = parseInt(btn.dataset.day); render(); };
-    });
-    pop.querySelector('[data-nav="-1"]').onclick = () => { viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; } render(); };
-    pop.querySelector('[data-nav="1"]').onclick = () => { viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; } render(); };
-    if (opts.withTime) {
-      pop.querySelector("[data-hour]").onchange = e => selHour = parseInt(e.target.value);
-      pop.querySelector("[data-min]").onchange = e => selMin = parseInt(e.target.value);
-    }
-    pop.querySelector("[data-close]").onclick = closeCalendarPopup;
-    pop.querySelector("[data-done]").onclick = () => {
-      if (selDay == null) { closeCalendarPopup(); return; }
-      const dateStr = `${viewYear}-${pad2(viewMonth + 1)}-${pad2(selDay)}`;
-      opts.onSelect(opts.withTime ? `${dateStr}T${pad2(selHour)}:${pad2(selMin)}` : dateStr);
-      closeCalendarPopup();
-    };
-  }
-  render();
-  document.body.appendChild(pop);
-  const rect = anchorEl.getBoundingClientRect();
-  pop.style.top = `${Math.min(rect.bottom + 4, window.innerHeight - 340)}px`;
-  pop.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - 276))}px`;
-  setTimeout(() => document.addEventListener("mousedown", calendarOutsideClick, true), 0);
-}
-if (window.matchMedia("(max-width: 639px)").matches) {
-  [
-    { id: "fam-birthday", withTime: false },
-    { id: "ev-date", withTime: false },
-    { id: "tr-arrival", withTime: true },
-    { id: "tr-departure", withTime: true }
-  ].forEach(({ id, withTime }) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.type = "text";
-    el.readOnly = true;
-    el.placeholder = withTime ? "mm/dd/yyyy --:--" : "mm/dd/yyyy";
-    el.addEventListener("click", () => {
-      openCalendarPopup(el, { withTime, initialDate: parseIsoDateTime(el.value), onSelect: value => { el.value = value; } });
-    });
-  });
-}
 // ---------- AI chat widget ----------
 // Calls our own server function at /api/chat, which holds the real API key.
 // This only works once deployed on a host that runs serverless functions (e.g. Vercel)
