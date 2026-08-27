@@ -6,6 +6,7 @@
 <title>FamEvent — Family Planning & Event Organization</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<script src="vendor/supabase.min.js"></script>
 <style>
   body { font-family: 'Inter', system-ui, sans-serif; background:#FFFBF5; }
   .pill { font-size:11px; font-weight:600; padding:4px 10px; border-radius:9999px; display:inline-block; }
@@ -874,10 +875,17 @@ function renderAll() {
 renderAll();
 
 // ---------- account (sign up / sign in) ----------
-// Talks to /api/auth/*, which only runs once deployed on a host that runs serverless
-// functions (e.g. Vercel) with SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and SESSION_SECRET
-// set in that project's environment variables. The session itself is a plain httpOnly
-// cookie set by the server — nothing about it is stored in localStorage.
+// Uses Supabase's own hosted Auth service directly from the browser — no custom backend
+// needed, so this works on plain static hosting like GitHub Pages. The project URL and
+// anon/public key below are meant to be public (they only grant what your Supabase Row
+// Level Security policies allow); replace the placeholders with your own project's values
+// from Supabase → Settings → API.
+const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const supabaseClient = (SUPABASE_URL.startsWith("http") && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
 let authMode = "signup";
 function openAuthModal(mode) {
   authMode = mode;
@@ -911,44 +919,47 @@ function showAuthError(message) {
   el.textContent = message;
   el.classList.remove("hidden");
 }
+function userDisplayName(user) {
+  return user?.user_metadata?.full_name || user?.email || "";
+}
 async function submitAuth(evt) {
   evt.preventDefault();
+  if (!supabaseClient) {
+    showAuthError("Accounts aren't configured yet — set SUPABASE_URL and SUPABASE_ANON_KEY near the top of the script.");
+    return;
+  }
   const email = document.getElementById("auth-email").value.trim();
   const password = document.getElementById("auth-password").value;
   const isSignup = authMode === "signup";
 
+  let fullName = "";
   if (isSignup) {
-    const fullName = document.getElementById("auth-fullname").value.trim();
+    fullName = document.getElementById("auth-fullname").value.trim();
     const confirm = document.getElementById("auth-confirm").value;
     if (!fullName) { showAuthError("Enter your full name."); return; }
     if (password !== confirm) { showAuthError("Passwords don't match."); return; }
   }
 
-  try {
-    const resp = await fetch(isSignup ? "/api/auth/register" : "/api/auth/login", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      credentials: "same-origin",
-      body: JSON.stringify(isSignup
-        ? { fullName: document.getElementById("auth-fullname").value.trim(), email, password }
-        : { email, password })
-    });
-    const result = await resp.json();
-    if (!resp.ok) {
-      showAuthError(result.error || "Something went wrong. Please try again.");
-      return;
-    }
-    closeAuthModal();
-    showLoggedIn(result.user);
-  } catch (err) {
-    showAuthError("Accounts aren't set up on this host yet — this only works once deployed with a database connected (see api/auth/*.js).");
+  const { data, error } = isSignup
+    ? await supabaseClient.auth.signUp({ email, password, options: { data: { full_name: fullName } } })
+    : await supabaseClient.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    showAuthError(error.message);
+    return;
+  }
+  closeAuthModal();
+  if (data.session) {
+    showLoggedIn(data.user);
+  } else if (isSignup) {
+    alert("Almost there — check your email to confirm your account, then sign in.");
   }
 }
 function showLoggedIn(user) {
   document.getElementById("account-guest").classList.add("hidden");
   document.getElementById("account-user").classList.remove("hidden");
   document.getElementById("account-user").classList.add("flex");
-  document.getElementById("account-name").textContent = user.fullName;
+  document.getElementById("account-name").textContent = userDisplayName(user);
 }
 function showLoggedOut() {
   document.getElementById("account-user").classList.add("hidden");
@@ -956,21 +967,17 @@ function showLoggedOut() {
   document.getElementById("account-guest").classList.remove("hidden");
 }
 async function logout() {
-  try {
-    await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
-  } catch (err) {}
+  if (supabaseClient) await supabaseClient.auth.signOut();
   showLoggedOut();
 }
-(async function checkSession() {
-  try {
-    const resp = await fetch("/api/auth/me", { credentials: "same-origin" });
-    if (!resp.ok) return;
-    const result = await resp.json();
-    showLoggedIn(result.user);
-  } catch (err) {
-    // No backend on this host (e.g. local static preview) — stay logged out silently.
-  }
-})();
+if (supabaseClient) {
+  supabaseClient.auth.getSession().then(({ data }) => {
+    if (data.session) showLoggedIn(data.session.user);
+  });
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    if (session) showLoggedIn(session.user); else showLoggedOut();
+  });
+}
 
 // ---------- AI chat widget ----------
 // Calls our own server function at /api/chat, which holds the real API key.
