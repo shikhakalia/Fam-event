@@ -880,8 +880,8 @@ renderAll();
 // anon/public key below are meant to be public (they only grant what your Supabase Row
 // Level Security policies allow); replace the placeholders with your own project's values
 // from Supabase → Settings → API.
-const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://jyfxkufhpbqchtyedoeh.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_5d2q8VB46UioqxnpFjQgmQ_Iw84LRWj";
 const supabaseClient = (SUPABASE_URL.startsWith("http") && window.supabase)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
