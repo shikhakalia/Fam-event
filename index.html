@@ -367,6 +367,10 @@
     <select id="dp-hour" class="border border-slate-200 rounded-md px-1 py-1"></select>
     <span>:</span>
     <select id="dp-min" class="border border-slate-200 rounded-md px-1 py-1"></select>
+    <select id="dp-ampm" class="border border-slate-200 rounded-md px-1 py-1">
+      <option value="AM">AM</option>
+      <option value="PM">PM</option>
+    </select>
   </div>
   <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-100">
     <button type="button" onclick="dpToday()" class="text-xs text-violet-600 font-semibold">Today</button>
@@ -935,14 +939,28 @@ function formatDateDisplay(iso) {
   const [y, m, d] = iso.split("-").map(Number);
   return `${pad2(m)}/${pad2(d)}/${String(y).slice(-2)}`;
 }
+function to12Hour(h24) {
+  const ampm = h24 >= 12 ? "PM" : "AM";
+  const h12 = h24 % 12 || 12;
+  return { h12, ampm };
+}
+function to24Hour(h12, ampm) {
+  const h = h12 % 12;
+  return ampm === "PM" ? h + 12 : h;
+}
 function formatDateTimeDisplay(iso) {
   if (!iso) return "";
   const [datePart, timePart] = iso.split("T");
-  return timePart ? `${formatDateDisplay(datePart)} ${timePart}` : formatDateDisplay(datePart);
+  if (!timePart) return formatDateDisplay(datePart);
+  const [h24, mi] = timePart.split(":").map(Number);
+  const { h12, ampm } = to12Hour(h24);
+  return `${formatDateDisplay(datePart)} ${h12}:${pad2(mi)} ${ampm}`;
 }
-function populateTimeSelects(h, mi) {
-  document.getElementById("dp-hour").innerHTML = Array.from({ length: 24 }, (_, i) => `<option value="${i}" ${i === h ? "selected" : ""}>${pad2(i)}</option>`).join("");
+function populateTimeSelects(h24, mi) {
+  const { h12, ampm } = to12Hour(h24);
+  document.getElementById("dp-hour").innerHTML = Array.from({ length: 12 }, (_, i) => i + 1).map(h => `<option value="${h}" ${h === h12 ? "selected" : ""}>${h}</option>`).join("");
   document.getElementById("dp-min").innerHTML = Array.from({ length: 60 }, (_, i) => `<option value="${i}" ${i === mi ? "selected" : ""}>${pad2(i)}</option>`).join("");
+  document.getElementById("dp-ampm").value = ampm;
 }
 function openDatePicker(inputId, evt) {
   evt.stopPropagation();
@@ -982,8 +1000,10 @@ function dpSelect(y, m, d) {
 }
 function dpDone() {
   const iso = dpPendingIso || isoFromParts(dpDate.getFullYear(), dpDate.getMonth(), dpDate.getDate());
-  const h = pad2(document.getElementById("dp-hour").value);
+  const h12 = Number(document.getElementById("dp-hour").value);
+  const ampm = document.getElementById("dp-ampm").value;
   const mi = pad2(document.getElementById("dp-min").value);
+  const h = pad2(to24Hour(h12, ampm));
   dpApply(`${iso}T${h}:${mi}`);
 }
 function dpToday() {
