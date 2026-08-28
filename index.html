@@ -959,6 +959,7 @@ function openDatePicker(inputId, evt) {
   if (dpWithTime) {
     const [h, mi] = (timePart || "00:00").split(":").map(Number);
     populateTimeSelects(h || 0, mi || 0);
+    if (!dpPendingIso) dpPendingIso = isoFromParts(dpDate.getFullYear(), dpDate.getMonth(), dpDate.getDate());
   }
   renderDatePicker();
   const popup = document.getElementById("dp-popup");
@@ -980,10 +981,10 @@ function dpSelect(y, m, d) {
   dpApply(iso);
 }
 function dpDone() {
-  if (!dpPendingIso) { document.getElementById("dp-popup").classList.add("hidden"); return; }
+  const iso = dpPendingIso || isoFromParts(dpDate.getFullYear(), dpDate.getMonth(), dpDate.getDate());
   const h = pad2(document.getElementById("dp-hour").value);
   const mi = pad2(document.getElementById("dp-min").value);
-  dpApply(`${dpPendingIso}T${h}:${mi}`);
+  dpApply(`${iso}T${h}:${mi}`);
 }
 function dpToday() {
   const now = new Date();
