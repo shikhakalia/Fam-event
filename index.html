@@ -1044,7 +1044,11 @@ function renderDatePicker() {
 const DP_TRIGGER_IDS = ["fam-birthday", "ev-date", "tr-arrival", "tr-departure", "task-due"];
 document.addEventListener("click", (e) => {
   const popup = document.getElementById("dp-popup");
-  if (!popup.classList.contains("hidden") && !popup.contains(e.target) && !DP_TRIGGER_IDS.includes(e.target.id)) {
+  // composedPath() reflects the DOM as it was when the click was dispatched — unlike
+  // popup.contains(e.target), it stays correct even when a click (e.g. picking a day)
+  // triggers a re-render that replaces the clicked element before bubbling finishes.
+  const path = e.composedPath ? e.composedPath() : [e.target];
+  if (!popup.classList.contains("hidden") && !path.includes(popup) && !DP_TRIGGER_IDS.includes(e.target.id)) {
     popup.classList.add("hidden");
   }
 });
