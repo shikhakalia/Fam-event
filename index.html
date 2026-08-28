@@ -977,7 +977,6 @@ function openDatePicker(inputId, evt) {
   if (dpWithTime) {
     const [h, mi] = (timePart || "00:00").split(":").map(Number);
     populateTimeSelects(h || 0, mi || 0);
-    if (!dpPendingIso) dpPendingIso = isoFromParts(dpDate.getFullYear(), dpDate.getMonth(), dpDate.getDate());
   }
   renderDatePicker();
   const popup = document.getElementById("dp-popup");
