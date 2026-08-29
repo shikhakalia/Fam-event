@@ -807,7 +807,13 @@ function enableTaskReminders() {
 }
 function updateReminderButton() {
   const btn = document.getElementById("task-reminders-btn");
-  if (!("Notification" in window)) { btn.classList.add("hidden"); return; }
+  if (!("Notification" in window)) {
+    btn.innerHTML = `<i class="fa-regular fa-bell-slash mr-1"></i>Reminders not supported here`;
+    btn.classList.add("text-slate-300", "cursor-not-allowed");
+    btn.title = "This browser doesn't support notifications in a regular tab (common on iPhone/iPad Safari). Try Chrome or Firefox, or add this page to your Home Screen.";
+    btn.disabled = true;
+    return;
+  }
   if (Notification.permission === "granted") {
     btn.innerHTML = `<i class="fa-solid fa-bell mr-1"></i>Reminders on`;
     btn.classList.add("text-emerald-600");
