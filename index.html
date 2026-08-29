@@ -40,16 +40,20 @@
     <p class="text-sm text-slate-500 mb-4" id="auth-subtitle">Save your family's plans to your own account.</p>
 
     <div id="auth-error" class="hidden text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2 mb-3"></div>
+    <div id="auth-success" class="hidden text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 mb-3"></div>
 
     <form id="auth-form" onsubmit="submitAuth(event)" class="space-y-3">
       <input id="auth-fullname" placeholder="Full name" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
       <input id="auth-email" type="email" placeholder="Email" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
       <input id="auth-password" type="password" placeholder="Password" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
       <input id="auth-confirm" type="password" placeholder="Confirm password" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+      <p id="auth-forgot-wrap" class="hidden text-right -mt-1">
+        <button type="button" onclick="openAuthModal('forgot')" class="text-xs text-violet-600 font-semibold">Forgot password?</button>
+      </p>
       <button type="submit" id="auth-submit" class="w-full bg-violet-600 text-white font-semibold py-2 rounded-lg hover:bg-violet-700">Create account</button>
     </form>
 
-    <p class="text-xs text-slate-400 mt-4 text-center">
+    <p class="text-xs text-slate-400 mt-4 text-center" id="auth-toggle-wrap">
       <span id="auth-toggle-text">Already have an account?</span>
       <button type="button" onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-violet-600 font-semibold">Sign in</button>
     </p>
@@ -1113,6 +1117,7 @@ let authMode = "signup";
 function openAuthModal(mode) {
   authMode = mode;
   document.getElementById("auth-error").classList.add("hidden");
+  document.getElementById("auth-success").classList.add("hidden");
   document.getElementById("auth-form").reset();
   applyAuthMode();
   document.getElementById("auth-modal").classList.remove("hidden");
@@ -1123,22 +1128,40 @@ function closeAuthModal() {
   document.getElementById("auth-modal").classList.remove("flex");
 }
 function toggleAuthMode() {
-  authMode = authMode === "signup" ? "signin" : "signup";
-  document.getElementById("auth-error").classList.add("hidden");
-  applyAuthMode();
+  const next = { signup: "signin", signin: "signup", forgot: "signin", reset: "signin" }[authMode] || "signup";
+  openAuthModal(next);
 }
+const AUTH_MODE_CONFIG = {
+  signup: { title: "Create your account", subtitle: "Save your family's plans to your own account.", fullname: true, email: true, password: true, confirm: true, forgot: false, submit: "Create account", toggleText: "Already have an account?", toggleBtn: "Sign in", toggleWrap: true },
+  signin: { title: "Welcome back", subtitle: "Sign in to your FamEvent account.", fullname: false, email: true, password: true, confirm: false, forgot: true, submit: "Sign in", toggleText: "Don't have an account?", toggleBtn: "Sign up", toggleWrap: true },
+  forgot: { title: "Reset your password", subtitle: "Enter your email and we'll send you a reset link.", fullname: false, email: true, password: false, confirm: false, forgot: false, submit: "Send reset link", toggleText: "Remembered it?", toggleBtn: "Back to sign in", toggleWrap: true },
+  reset: { title: "Set a new password", subtitle: "Choose a new password for your account.", fullname: false, email: false, password: true, confirm: true, forgot: false, submit: "Update password", toggleWrap: false }
+};
 function applyAuthMode() {
-  const isSignup = authMode === "signup";
-  document.getElementById("auth-title").textContent = isSignup ? "Create your account" : "Welcome back";
-  document.getElementById("auth-subtitle").textContent = isSignup ? "Save your family's plans to your own account." : "Sign in to your FamEvent account.";
-  document.getElementById("auth-fullname").classList.toggle("hidden", !isSignup);
-  document.getElementById("auth-confirm").classList.toggle("hidden", !isSignup);
-  document.getElementById("auth-submit").textContent = isSignup ? "Create account" : "Sign in";
-  document.getElementById("auth-toggle-text").textContent = isSignup ? "Already have an account?" : "Don't have an account?";
-  document.getElementById("auth-toggle-btn").textContent = isSignup ? "Sign in" : "Sign up";
+  const cfg = AUTH_MODE_CONFIG[authMode];
+  document.getElementById("auth-title").textContent = cfg.title;
+  document.getElementById("auth-subtitle").textContent = cfg.subtitle;
+  document.getElementById("auth-fullname").classList.toggle("hidden", !cfg.fullname);
+  document.getElementById("auth-email").classList.toggle("hidden", !cfg.email);
+  document.getElementById("auth-password").classList.toggle("hidden", !cfg.password);
+  document.getElementById("auth-confirm").classList.toggle("hidden", !cfg.confirm);
+  document.getElementById("auth-forgot-wrap").classList.toggle("hidden", !cfg.forgot);
+  document.getElementById("auth-submit").textContent = cfg.submit;
+  document.getElementById("auth-toggle-wrap").classList.toggle("hidden", !cfg.toggleWrap);
+  if (cfg.toggleWrap) {
+    document.getElementById("auth-toggle-text").textContent = cfg.toggleText;
+    document.getElementById("auth-toggle-btn").textContent = cfg.toggleBtn;
+  }
 }
 function showAuthError(message) {
+  document.getElementById("auth-success").classList.add("hidden");
   const el = document.getElementById("auth-error");
+  el.textContent = message;
+  el.classList.remove("hidden");
+}
+function showAuthSuccess(message) {
+  document.getElementById("auth-error").classList.add("hidden");
+  const el = document.getElementById("auth-success");
   el.textContent = message;
   el.classList.remove("hidden");
 }
@@ -1151,6 +1174,29 @@ async function submitAuth(evt) {
     showAuthError("Accounts aren't configured yet — set SUPABASE_URL and SUPABASE_ANON_KEY near the top of the script.");
     return;
   }
+
+  if (authMode === "forgot") {
+    const email = document.getElementById("auth-email").value.trim();
+    if (!email) { showAuthError("Enter your email."); return; }
+    const redirectTo = window.location.href.split("#")[0];
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) { showAuthError(error.message); return; }
+    showAuthSuccess("Check your email for a link to reset your password.");
+    return;
+  }
+
+  if (authMode === "reset") {
+    const password = document.getElementById("auth-password").value;
+    const confirm = document.getElementById("auth-confirm").value;
+    if (password.length < 8) { showAuthError("Password must be at least 8 characters."); return; }
+    if (password !== confirm) { showAuthError("Passwords don't match."); return; }
+    const { error } = await supabaseClient.auth.updateUser({ password });
+    if (error) { showAuthError(error.message); return; }
+    closeAuthModal();
+    alert("Your password has been updated — you're signed in.");
+    return;
+  }
+
   const email = document.getElementById("auth-email").value.trim();
   const password = document.getElementById("auth-password").value;
   const isSignup = authMode === "signup";
@@ -1197,7 +1243,8 @@ if (supabaseClient) {
   supabaseClient.auth.getSession().then(({ data }) => {
     if (data.session) showLoggedIn(data.session.user);
   });
-  supabaseClient.auth.onAuthStateChange((_event, session) => {
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === "PASSWORD_RECOVERY") { openAuthModal("reset"); return; }
     if (session) showLoggedIn(session.user); else showLoggedOut();
   });
 }
