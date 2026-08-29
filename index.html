@@ -89,7 +89,7 @@
       <a href="#" data-tab="travel" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-plane w-4"></i>Travel</a>
       <a href="#" data-tab="tasks" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-square-check w-4"></i>Tasks</a>
       <a href="#" data-tab="soon" data-title="Themes & Decor" data-icon="fa-palette" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-palette w-4"></i>Themes & Decor</a>
-      <a href="#" data-tab="soon" data-title="Notes" data-icon="fa-note-sticky" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-note-sticky w-4"></i>Notes</a>
+      <a href="#" data-tab="notes" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-note-sticky w-4"></i>Notes</a>
       <a href="#" data-tab="soon" data-title="Messages" data-icon="fa-message" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-message w-4"></i>Messages</a>
       <a href="#" data-tab="soon" data-title="Settings" data-icon="fa-gear" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-gear w-4"></i>Settings</a>
     </nav>
@@ -297,7 +297,7 @@
         <div class="flex flex-wrap items-center gap-2">
           <button onclick="saveTask()" id="task-submit" class="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700">Add task</button>
           <button onclick="cancelEditTask()" id="task-cancel" class="hidden px-4 py-2 rounded-lg bg-slate-100 text-slate-500 text-sm font-semibold hover:bg-slate-200">Cancel</button>
-          <button onclick="enableTaskReminders()" id="task-reminders-btn" class="text-xs text-violet-600 font-semibold ml-auto"><i class="fa-regular fa-bell mr-1"></i>Enable reminders</button>
+          <button onclick="enableReminders()" id="task-reminders-btn" class="reminder-toggle-btn text-xs text-violet-600 font-semibold ml-auto"><i class="fa-regular fa-bell mr-1"></i>Enable reminders</button>
         </div>
       </div>
       <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
@@ -314,7 +314,38 @@
       </div>
     </section>
 
-    <!-- PLACEHOLDER PANEL (Themes, Notes, Messages, Settings) -->
+    <!-- NOTES PANEL -->
+    <section class="panel" id="panel-notes">
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-5">
+        <h4 class="font-bold mb-3"><i class="fa-solid fa-note-sticky text-violet-600 mr-1"></i> <span id="note-form-heading">Add a note</span></h4>
+        <div class="flex flex-wrap gap-2 mb-2">
+          <input id="note-title" placeholder="Note title" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <select id="note-event-picker" class="px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
+        </div>
+        <textarea id="note-body" placeholder="Write the details..." rows="3" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm mb-2"></textarea>
+        <div class="flex flex-wrap gap-2 mb-2 items-center">
+          <input id="note-reminder" type="text" readonly placeholder="MM/DD/YY --:-- (optional reminder)" onclick="openDatePicker('note-reminder', event)" class="px-3 py-2 border border-slate-200 rounded-lg text-sm cursor-pointer bg-white">
+          <label class="flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer">
+            <input type="checkbox" id="note-pinned" class="w-4 h-4 accent-violet-600 cursor-pointer"> Pin this note
+          </label>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="saveNote()" id="note-submit" class="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700">Add note</button>
+          <button onclick="cancelEditNote()" id="note-cancel" class="hidden px-4 py-2 rounded-lg bg-slate-100 text-slate-500 text-sm font-semibold hover:bg-slate-200">Cancel</button>
+          <button onclick="enableReminders()" id="note-reminders-btn" class="reminder-toggle-btn text-xs text-violet-600 font-semibold ml-auto"><i class="fa-regular fa-bell mr-1"></i>Enable reminders</button>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <div class="flex items-center justify-between mb-3 gap-2 flex-wrap">
+          <h4 class="font-bold">Notes</h4>
+          <input id="note-search" oninput="renderNotes()" placeholder="Search notes..." class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs w-40">
+        </div>
+        <div class="space-y-2 text-sm" id="notes-list"></div>
+        <p class="text-slate-400 text-sm py-2 text-center" id="notes-empty">No notes yet — add one above.</p>
+      </div>
+    </section>
+
+    <!-- PLACEHOLDER PANEL (Themes, Messages, Settings) -->
     <section class="panel" id="panel-soon">
       <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 text-center">
         <div class="w-14 h-14 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center mx-auto mb-3 text-xl">
@@ -412,12 +443,13 @@ const STORAGE_KEY = "family-events-data-v2";
 function loadData() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) { try { return JSON.parse(raw); } catch(e) {} }
-  return { family: [], events: [], guests: [], budget: [], travel: [], decor: {}, tasks: [] };
+  return { family: [], events: [], guests: [], budget: [], travel: [], decor: {}, tasks: [], notes: [] };
 }
 let data = loadData();
 if (!data.travel) data.travel = [];
 if (!data.decor) data.decor = {};
 if (!data.tasks) data.tasks = [];
+if (!data.notes) data.notes = [];
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); renderAll(); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
@@ -539,9 +571,16 @@ function populateEventPickers() {
     if (prev && data.events.some(e => e.id === prev)) sel.value = prev;
   });
   populateTaskEventPicker();
+  populateNoteEventPicker();
 }
 function populateTaskEventPicker() {
   const sel = document.getElementById("task-event-picker");
+  const prev = sel.value;
+  sel.innerHTML = `<option value="">No event</option>` + data.events.map(ev => `<option value="${ev.id}">${esc(ev.name)}</option>`).join("");
+  if (prev && data.events.some(e => e.id === prev)) sel.value = prev;
+}
+function populateNoteEventPicker() {
+  const sel = document.getElementById("note-event-picker");
   const prev = sel.value;
   sel.innerHTML = `<option value="">No event</option>` + data.events.map(ev => `<option value="${ev.id}">${esc(ev.name)}</option>`).join("");
   if (prev && data.events.some(e => e.id === prev)) sel.value = prev;
@@ -752,14 +791,6 @@ function setTaskFilter(filter) {
   taskFilter = filter;
   renderTasks();
 }
-function taskDueStatus(dueIso) {
-  if (!dueIso) return null;
-  const due = parseDueIso(dueIso).getTime();
-  const now = Date.now();
-  if (due < now) return "overdue";
-  if (due - now < 24 * 60 * 60 * 1000) return "soon";
-  return "upcoming";
-}
 function renderTasks() {
   document.querySelectorAll("#task-filter button").forEach(btn => {
     const active = btn.dataset.filter === taskFilter;
@@ -776,7 +807,7 @@ function renderTasks() {
   });
   document.getElementById("tasks-empty").style.display = sorted.length ? "none" : "block";
   list.innerHTML = sorted.map(t => {
-    const status = t.completed ? null : taskDueStatus(t.dueIso);
+    const status = t.completed ? null : reminderStatus(t.dueIso);
     const badge = status === "overdue" ? `<span class="pill bg-rose-100 text-rose-600">Overdue</span>`
       : status === "soon" ? `<span class="pill bg-amber-100 text-amber-600">Due soon</span>`
       : "";
@@ -797,46 +828,153 @@ function renderTasks() {
         <button onclick="deleteTask('${t.id}')" class="text-slate-400 hover:text-rose-500 text-xs font-semibold">remove</button>
       </div>`;
   }).join("");
-  scheduleTaskReminders();
 }
 
-// ---------- task reminders ----------
+// ---------- notes ----------
+let noteEditingId = null;
+function saveNote() {
+  const title = document.getElementById("note-title").value.trim();
+  if (!title) return;
+  const eventId = document.getElementById("note-event-picker").value;
+  const body = document.getElementById("note-body").value.trim();
+  const reminderIso = document.getElementById("note-reminder").dataset.iso || "";
+  const pinned = document.getElementById("note-pinned").checked;
+
+  if (noteEditingId) {
+    const n = data.notes.find(n => n.id === noteEditingId);
+    if (n) { n.title = title; n.eventId = eventId; n.body = body; n.reminderIso = reminderIso; n.pinned = pinned; }
+  } else {
+    data.notes.push({ id: uid(), title, eventId, body, reminderIso, pinned, createdAt: Date.now() });
+  }
+  cancelEditNote();
+  save();
+}
+function editNote(id) {
+  const n = data.notes.find(n => n.id === id);
+  if (!n) return;
+  noteEditingId = id;
+  document.getElementById("note-title").value = n.title;
+  document.getElementById("note-body").value = n.body || "";
+  document.getElementById("note-event-picker").value = n.eventId || "";
+  document.getElementById("note-pinned").checked = !!n.pinned;
+  const reminderInput = document.getElementById("note-reminder");
+  reminderInput.dataset.iso = n.reminderIso || "";
+  reminderInput.value = n.reminderIso ? formatDateTimeDisplay(n.reminderIso) : "";
+  document.getElementById("note-form-heading").textContent = "Edit note";
+  document.getElementById("note-submit").textContent = "Save changes";
+  document.getElementById("note-cancel").classList.remove("hidden");
+  document.getElementById("panel-notes").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function cancelEditNote() {
+  noteEditingId = null;
+  ["note-title", "note-body"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("note-event-picker").value = "";
+  document.getElementById("note-pinned").checked = false;
+  const reminderInput = document.getElementById("note-reminder");
+  reminderInput.value = ""; reminderInput.dataset.iso = "";
+  document.getElementById("note-form-heading").textContent = "Add a note";
+  document.getElementById("note-submit").textContent = "Add note";
+  document.getElementById("note-cancel").classList.add("hidden");
+}
+function deleteNote(id) {
+  data.notes = data.notes.filter(n => n.id !== id);
+  if (noteEditingId === id) cancelEditNote();
+  save();
+}
+function toggleNotePinned(id) {
+  const n = data.notes.find(n => n.id === id);
+  if (n) n.pinned = !n.pinned;
+  save();
+}
+function renderNotes() {
+  const list = document.getElementById("notes-list");
+  const query = (document.getElementById("note-search").value || "").trim().toLowerCase();
+  const filtered = data.notes.filter(n => !query || n.title.toLowerCase().includes(query) || (n.body || "").toLowerCase().includes(query));
+  const sorted = filtered.slice().sort((a, b) => {
+    if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+    return (b.createdAt || 0) - (a.createdAt || 0);
+  });
+  document.getElementById("notes-empty").style.display = sorted.length ? "none" : "block";
+  document.getElementById("notes-empty").textContent = data.notes.length && query ? "No notes match your search." : "No notes yet — add one above.";
+  list.innerHTML = sorted.map(n => {
+    const status = reminderStatus(n.reminderIso);
+    const badge = status === "overdue" ? `<span class="pill bg-rose-100 text-rose-600">Overdue</span>`
+      : status === "soon" ? `<span class="pill bg-amber-100 text-amber-600">Reminder soon</span>`
+      : "";
+    const ev = n.eventId ? eventById(n.eventId) : null;
+    return `
+      <div class="flex items-start gap-3 py-2 border-t border-slate-50 first:border-t-0">
+        <button onclick="toggleNotePinned('${n.id}')" class="mt-0.5 ${n.pinned ? "text-amber-500" : "text-slate-300 hover:text-slate-400"}" title="${n.pinned ? "Unpin" : "Pin"}"><i class="fa-solid fa-thumbtack"></i></button>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center flex-wrap gap-2">
+            <p class="font-semibold">${esc(n.title)}</p>
+            ${badge}
+            ${ev ? `<span class="pill bg-indigo-100 text-indigo-600">${esc(ev.name)}</span>` : ""}
+          </div>
+          ${n.body ? `<p class="text-xs text-slate-500 mt-0.5 whitespace-pre-wrap">${esc(n.body)}</p>` : ""}
+          ${n.reminderIso ? `<p class="text-xs text-slate-400 mt-0.5"><i class="fa-regular fa-bell mr-1"></i>${esc(formatDateTimeDisplay(n.reminderIso))}</p>` : ""}
+        </div>
+        <button onclick="editNote('${n.id}')" class="text-slate-400 hover:text-violet-600 text-xs font-semibold">edit</button>
+        <button onclick="deleteNote('${n.id}')" class="text-slate-400 hover:text-rose-500 text-xs font-semibold">remove</button>
+      </div>`;
+  }).join("");
+}
+
+// ---------- reminders (shared by tasks and notes) ----------
 // Best-effort only: fires a browser Notification while this tab is open and the due time
 // arrives. There's no service worker or push server here, so reminders won't fire if the
 // tab or browser is closed — that would need real backend infrastructure.
-let taskReminderTimers = {};
-function enableTaskReminders() {
+function reminderStatus(iso) {
+  if (!iso) return null;
+  const due = parseDueIso(iso).getTime();
+  const now = Date.now();
+  if (due < now) return "overdue";
+  if (due - now < 24 * 60 * 60 * 1000) return "soon";
+  return "upcoming";
+}
+let reminderTimers = {};
+function enableReminders() {
   if (!("Notification" in window)) { alert("This browser doesn't support notifications."); return; }
-  Notification.requestPermission().then(() => { updateReminderButton(); scheduleTaskReminders(); });
+  Notification.requestPermission().then(() => { updateReminderButtons(); scheduleReminders(); });
 }
-function updateReminderButton() {
-  const btn = document.getElementById("task-reminders-btn");
-  if (!("Notification" in window)) {
-    btn.innerHTML = `<i class="fa-regular fa-bell-slash mr-1"></i>Reminders not supported here`;
-    btn.classList.add("text-slate-300", "cursor-not-allowed");
-    btn.title = "This browser doesn't support notifications in a regular tab (common on iPhone/iPad Safari). Try Chrome or Firefox, or add this page to your Home Screen.";
-    btn.disabled = true;
-    return;
-  }
-  if (Notification.permission === "granted") {
-    btn.innerHTML = `<i class="fa-solid fa-bell mr-1"></i>Reminders on`;
-    btn.classList.add("text-emerald-600");
-  } else {
-    btn.innerHTML = `<i class="fa-regular fa-bell mr-1"></i>Enable reminders`;
-    btn.classList.remove("text-emerald-600");
-  }
+function updateReminderButtons() {
+  document.querySelectorAll(".reminder-toggle-btn").forEach(btn => {
+    if (!("Notification" in window)) {
+      btn.innerHTML = `<i class="fa-regular fa-bell-slash mr-1"></i>Reminders not supported here`;
+      btn.classList.add("text-slate-300", "cursor-not-allowed");
+      btn.title = "This browser doesn't support notifications in a regular tab (common on iPhone/iPad Safari). Try Chrome or Firefox, or add this page to your Home Screen.";
+      btn.disabled = true;
+      return;
+    }
+    if (Notification.permission === "granted") {
+      btn.innerHTML = `<i class="fa-solid fa-bell mr-1"></i>Reminders on`;
+      btn.classList.add("text-emerald-600");
+    } else {
+      btn.innerHTML = `<i class="fa-regular fa-bell mr-1"></i>Enable reminders`;
+      btn.classList.remove("text-emerald-600");
+    }
+  });
 }
-function scheduleTaskReminders() {
-  Object.values(taskReminderTimers).forEach(t => clearTimeout(t));
-  taskReminderTimers = {};
+function scheduleReminders() {
+  Object.values(reminderTimers).forEach(t => clearTimeout(t));
+  reminderTimers = {};
   if (!("Notification" in window) || Notification.permission !== "granted") return;
   data.tasks.forEach(t => {
     if (t.completed || !t.dueIso) return;
     const delay = parseDueIso(t.dueIso).getTime() - Date.now();
     if (delay <= 0 || delay > 2147483647) return;
-    taskReminderTimers[t.id] = setTimeout(() => {
+    reminderTimers["task-" + t.id] = setTimeout(() => {
       const ev = t.eventId ? eventById(t.eventId) : null;
       new Notification("Task due: " + t.title, { body: ev ? `For ${ev.name}` : undefined });
+    }, delay);
+  });
+  data.notes.forEach(n => {
+    if (!n.reminderIso) return;
+    const delay = parseDueIso(n.reminderIso).getTime() - Date.now();
+    if (delay <= 0 || delay > 2147483647) return;
+    reminderTimers["note-" + n.id] = setTimeout(() => {
+      const ev = n.eventId ? eventById(n.eventId) : null;
+      new Notification("Reminder: " + n.title, { body: ev ? `For ${ev.name}` : (n.body || undefined) });
     }, delay);
   });
 }
@@ -937,7 +1075,7 @@ function renderDashboard() {
 // Every date/datetime field in the app (birthday, event date, travel arrival/departure)
 // uses this one picker instead of the native <input type="date">/"datetime-local">, so it
 // looks and behaves identically regardless of browser or platform.
-const DP_TIME_FIELDS = ["tr-arrival", "tr-departure", "task-due"];
+const DP_TIME_FIELDS = ["tr-arrival", "tr-departure", "task-due", "note-reminder"];
 let dpTargetId = null;
 let dpDate = new Date();
 let dpWithTime = false;
@@ -1051,7 +1189,7 @@ function renderDatePicker() {
   }
   document.getElementById("dp-grid").innerHTML = html;
 }
-const DP_TRIGGER_IDS = ["fam-birthday", "ev-date", "tr-arrival", "tr-departure", "task-due"];
+const DP_TRIGGER_IDS = ["fam-birthday", "ev-date", "tr-arrival", "tr-departure", "task-due", "note-reminder"];
 document.addEventListener("click", (e) => {
   const popup = document.getElementById("dp-popup");
   // composedPath() reflects the DOM as it was when the click was dispatched — unlike
@@ -1094,12 +1232,14 @@ function renderAll() {
   renderBudget();
   renderTravel();
   renderTasks();
+  renderNotes();
   renderThemes();
   renderDashboard();
   renderCalendar();
+  scheduleReminders();
 }
 renderAll();
-updateReminderButton();
+updateReminderButtons();
 
 // ---------- account (sign up / sign in) ----------
 // Uses Supabase's own hosted Auth service directly from the browser — no custom backend
