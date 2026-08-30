@@ -27,6 +27,10 @@
     <button onclick="openAuthModal('signup')" class="text-sm font-semibold bg-violet-600 text-white px-3 py-1.5 rounded-lg hover:bg-violet-700">Sign Up</button>
   </div>
   <div id="account-user" class="hidden items-center gap-3">
+    <button onclick="goToAnnouncements()" class="relative text-slate-400 hover:text-violet-600" title="Announcements">
+      <i class="fa-solid fa-bell"></i>
+      <span id="bell-badge" class="hidden absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">0</span>
+    </button>
     <span class="text-sm text-slate-600">Welcome, <span id="account-name" class="font-semibold"></span></span>
     <button onclick="logout()" class="text-sm font-semibold text-slate-400 hover:text-rose-500">Log out</button>
   </div>
@@ -57,6 +61,45 @@
       <span id="auth-toggle-text">Already have an account?</span>
       <button type="button" onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-violet-600 font-semibold">Sign in</button>
     </p>
+  </div>
+</div>
+
+<!-- ANNOUNCEMENT DETAIL MODAL -->
+<div id="announcement-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
+    <button type="button" onclick="closeAnnouncementModal()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+    <h3 class="text-xl font-bold mb-1" id="ann-detail-title"></h3>
+    <p class="text-sm text-slate-600 whitespace-pre-wrap mb-4" id="ann-detail-body"></p>
+    <div class="text-xs text-slate-500 space-y-1.5 border-t border-slate-100 pt-3">
+      <div class="flex justify-between"><span class="text-slate-400">Event</span><span class="font-medium" id="ann-detail-event"></span></div>
+      <div class="flex justify-between"><span class="text-slate-400">Date</span><span class="font-medium" id="ann-detail-date"></span></div>
+      <div class="flex justify-between"><span class="text-slate-400">Venue</span><span class="font-medium" id="ann-detail-venue"></span></div>
+      <div class="flex justify-between"><span class="text-slate-400">Sender</span><span class="font-medium" id="ann-detail-sender"></span></div>
+      <div class="flex justify-between"><span class="text-slate-400">Recipients</span><span class="font-medium" id="ann-detail-recipients"></span></div>
+      <div class="flex justify-between"><span class="text-slate-400">Attachments</span><span class="font-medium">No attachments</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- POST AN ANNOUNCEMENT MODAL -->
+<div id="ann-compose-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative">
+    <button type="button" onclick="closeAnnouncementComposer()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+    <h3 class="text-xl font-bold mb-1">Post an announcement</h3>
+    <p class="text-sm text-slate-500 mb-4">For <span id="ann-compose-event-name" class="font-semibold"></span> — visible to everyone connected to this event.</p>
+    <div id="ann-compose-error" class="hidden text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2 mb-3"></div>
+    <div class="space-y-3">
+      <select id="ann-compose-icon" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+        <option value="📢">📢 General update</option>
+        <option value="📍">📍 Venue changed</option>
+        <option value="📅">📅 Date/time changed</option>
+        <option value="🎉">🎉 Invitation</option>
+        <option value="🔔">🔔 Reminder</option>
+      </select>
+      <input id="ann-compose-title" placeholder="Title" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+      <textarea id="ann-compose-body" placeholder="Details (optional)" rows="3" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></textarea>
+      <button type="button" onclick="submitAnnouncementComposer()" class="w-full bg-violet-600 text-white font-semibold py-2 rounded-lg hover:bg-violet-700">Post</button>
+    </div>
   </div>
 </div>
 
@@ -112,6 +155,15 @@
 
     <!-- DASHBOARD PANEL -->
     <section class="panel active" id="panel-dashboard">
+      <div id="dash-announcements" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-5">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="font-bold">📢 Recent Announcements</h4>
+        </div>
+        <div id="announcements-signed-out" class="hidden text-slate-400 text-sm py-2 text-center">Sign in to see announcements for your events.</div>
+        <div id="announcements-list" class="space-y-2 text-sm"></div>
+        <p class="text-slate-400 text-sm py-2 text-center" id="announcements-empty">No announcements yet.</p>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
           <div class="flex items-center justify-between mb-3">
@@ -174,37 +226,49 @@
 
     <!-- EVENTS PANEL -->
     <section class="panel" id="panel-events">
-      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-5">
-        <h4 class="font-bold mb-3"><i class="fa-solid fa-wand-magic-sparkles text-violet-600 mr-1"></i> Create an event</h4>
-        <div class="flex flex-wrap gap-2 mb-2">
-          <input id="ev-name" placeholder="Event name" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
-          <select id="ev-type" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
-            <option>Birthday</option><option>Wedding</option><option>Baby Shower</option>
-            <option>Graduation</option><option>Anniversary</option><option>Family Reunion</option>
-            <option>Holiday Party</option><option>Dinner</option><option>Conference</option>
-            <option>Association Event</option><option>Other</option>
-          </select>
-        </div>
-        <div class="flex flex-wrap gap-2 mb-2">
-          <input id="ev-date" type="text" readonly placeholder="MM/DD/YY" onclick="openDatePicker('ev-date', event)" class="px-3 py-2 border border-slate-200 rounded-lg text-sm cursor-pointer bg-white">
-          <input id="ev-location" placeholder="Location" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
-          <input id="ev-budget" type="number" placeholder="Budget $" class="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm">
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <input id="ev-desc" placeholder="Description / theme" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
-          <button onclick="addEvent()" class="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700">Create</button>
-        </div>
+      <div id="events-gate" class="hidden bg-white rounded-2xl border border-slate-100 shadow-sm p-8 text-center">
+        <div class="w-14 h-14 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center mx-auto mb-3 text-xl"><i class="fa-solid fa-lock"></i></div>
+        <h4 class="font-bold text-lg">Sign in to create events</h4>
+        <p class="text-slate-500 text-sm mt-1 max-w-sm mx-auto">Events are now saved to your account (not just this browser) so announcements can reach the people connected to them. <button type="button" onclick="openAuthModal('signin')" class="text-violet-600 font-semibold">Sign in</button> or <button type="button" onclick="openAuthModal('signup')" class="text-violet-600 font-semibold">sign up</button>.</p>
       </div>
-      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-        <h4 class="font-bold mb-3">Your events</h4>
-        <div class="space-y-3 text-sm" id="events-list"></div>
-        <p class="text-slate-400 text-sm py-2 text-center" id="events-empty">No events yet — create one above.</p>
+      <div id="events-content">
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-5">
+          <h4 class="font-bold mb-3"><i class="fa-solid fa-wand-magic-sparkles text-violet-600 mr-1"></i> Create an event</h4>
+          <div class="flex flex-wrap gap-2 mb-2">
+            <input id="ev-name" placeholder="Event name" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <select id="ev-type" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+              <option>Birthday</option><option>Wedding</option><option>Baby Shower</option>
+              <option>Graduation</option><option>Anniversary</option><option>Family Reunion</option>
+              <option>Holiday Party</option><option>Dinner</option><option>Conference</option>
+              <option>Association Event</option><option>Other</option>
+            </select>
+          </div>
+          <div class="flex flex-wrap gap-2 mb-2">
+            <input id="ev-date" type="text" readonly placeholder="MM/DD/YY" onclick="openDatePicker('ev-date', event)" class="px-3 py-2 border border-slate-200 rounded-lg text-sm cursor-pointer bg-white">
+            <input id="ev-location" placeholder="Location" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <input id="ev-budget" type="number" placeholder="Budget $" class="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <input id="ev-desc" placeholder="Description / theme" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <button onclick="addEvent()" class="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700">Create</button>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <h4 class="font-bold mb-3">Your events</h4>
+          <div class="space-y-3 text-sm" id="events-list"></div>
+          <p class="text-slate-400 text-sm py-2 text-center" id="events-empty">No events yet — create one above.</p>
+        </div>
       </div>
     </section>
 
     <!-- GUESTS PANEL -->
     <section class="panel" id="panel-guests">
-      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+      <div id="guests-gate" class="hidden bg-white rounded-2xl border border-slate-100 shadow-sm p-8 text-center">
+        <div class="w-14 h-14 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center mx-auto mb-3 text-xl"><i class="fa-solid fa-lock"></i></div>
+        <h4 class="font-bold text-lg">Sign in to manage guests</h4>
+        <p class="text-slate-500 text-sm mt-1 max-w-sm mx-auto">Guests are tied to your signed-in events. <button type="button" onclick="openAuthModal('signin')" class="text-violet-600 font-semibold">Sign in</button> or <button type="button" onclick="openAuthModal('signup')" class="text-violet-600 font-semibold">sign up</button>.</p>
+      </div>
+      <div id="guests-content" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
         <div class="flex items-center gap-2 mb-4">
           <span class="text-sm font-semibold text-slate-500">Event:</span>
           <select id="guest-event-picker" onchange="renderGuests()" class="px-3 py-2 border border-violet-200 bg-violet-50 text-violet-700 font-semibold rounded-lg text-sm"></select>
@@ -450,6 +514,9 @@ if (!data.travel) data.travel = [];
 if (!data.decor) data.decor = {};
 if (!data.tasks) data.tasks = [];
 if (!data.notes) data.notes = [];
+// Events/guests/announcements are Supabase-backed (require sign-in) rather than local —
+// see the "events (Supabase-backed)" and "announcements" sections below.
+let currentUser = null;
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); renderAll(); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
@@ -518,26 +585,52 @@ function renderFamily() {
   });
 }
 
-// ---------- events ----------
-function addEvent() {
+// ---------- events (Supabase-backed — requires sign-in; see plan for schema) ----------
+function mapEventRow(row) {
+  return { id: row.id, name: row.name, type: row.type, date: row.date || "", location: row.location || "", budget: Number(row.budget) || 0, description: row.description || "", ownerId: row.owner_id };
+}
+function mapGuestRow(row) {
+  return { id: row.id, eventId: row.event_id, firstName: row.first_name, lastName: row.last_name || "", phone: row.phone || "", email: row.email || "", rsvp: row.rsvp, people: row.people, notes: row.notes || "" };
+}
+async function loadEventsAndGuests() {
+  if (!supabaseClient || !currentUser) { data.events = []; data.guests = []; return; }
+  const [eventsRes, guestsRes] = await Promise.all([
+    supabaseClient.from("events").select("*").order("date", { ascending: true }),
+    supabaseClient.from("guests").select("*")
+  ]);
+  data.events = eventsRes.error ? [] : eventsRes.data.map(mapEventRow);
+  data.guests = guestsRes.error ? [] : guestsRes.data.map(mapGuestRow);
+  if (eventsRes.error) console.error(eventsRes.error);
+  if (guestsRes.error) console.error(guestsRes.error);
+}
+async function addEvent() {
+  if (!currentUser) return;
   const name = document.getElementById("ev-name").value.trim();
   if (!name) return;
-  data.events.push({
-    id: uid(), name, type: document.getElementById("ev-type").value,
-    date: document.getElementById("ev-date").dataset.iso || "",
+  const { error } = await supabaseClient.from("events").insert({
+    owner_id: currentUser.id, name, type: document.getElementById("ev-type").value,
+    date: document.getElementById("ev-date").dataset.iso || null,
     location: document.getElementById("ev-location").value.trim(),
     budget: parseFloat(document.getElementById("ev-budget").value) || 0,
     description: document.getElementById("ev-desc").value.trim()
   });
+  if (error) { alert("Couldn't create event: " + error.message); return; }
   ["ev-name","ev-location","ev-budget","ev-desc"].forEach(id => document.getElementById(id).value = "");
   document.getElementById("ev-date").value = "";
   document.getElementById("ev-date").dataset.iso = "";
+  await loadEventsAndGuests();
+  await checkBirthdayAnnouncements();
   save();
 }
-function removeEvent(id) {
-  data.events = data.events.filter(e => e.id !== id);
-  data.guests = data.guests.filter(g => g.eventId !== id);
+async function removeEvent(id) {
+  if (!currentUser) return;
+  if (!confirm("Delete this event? This also removes its guests and announcements for everyone connected to it.")) return;
+  const { error } = await supabaseClient.from("events").delete().eq("id", id);
+  if (error) { alert("Couldn't delete event: " + error.message); return; }
   data.budget = data.budget.filter(b => b.eventId !== id);
+  data.travel = data.travel.filter(t => t.eventId !== id);
+  await loadEventsAndGuests();
+  await loadAnnouncements();
   save();
 }
 function renderEvents() {
@@ -552,6 +645,7 @@ function renderEvents() {
       <div class="w-11 h-11 rounded-lg bg-slate-100 flex items-center justify-center text-xl" title="${esc(ev.type)}">${eventIcon(ev.type)}</div>
       <div class="flex-1 min-w-0"><p class="font-semibold truncate">${esc(ev.name)}</p><p class="text-xs text-slate-400">${esc(ev.date)||"no date set"} · ${esc(ev.location)||"no location"} · budget $${ev.budget.toFixed(0)}</p></div>
       <span class="pill bg-indigo-100 text-indigo-600">${esc(ev.type)}</span>
+      <button onclick="openAnnouncementComposer('${ev.id}', '${esc(ev.name).replace(/'/g, "\\'")}')" title="Post an announcement" class="text-slate-400 hover:text-violet-600 text-xs font-semibold ml-2"><i class="fa-solid fa-bullhorn"></i></button>
       <button onclick="removeEvent('${ev.id}')" class="text-slate-400 hover:text-rose-500 text-xs font-semibold ml-2">remove</button>`;
     list.appendChild(div);
   });
@@ -587,25 +681,55 @@ function populateNoteEventPicker() {
 }
 
 // ---------- guests ----------
-function addGuest() {
+async function addGuest() {
+  if (!currentUser) return;
   const eventId = document.getElementById("guest-event-picker").value;
   const firstName = document.getElementById("g-first").value.trim();
   if (!eventId || !firstName) return;
-  data.guests.push({
-    id: uid(), eventId, firstName,
-    lastName: document.getElementById("g-last").value.trim(),
+  const { error } = await supabaseClient.from("guests").insert({
+    event_id: eventId, first_name: firstName,
+    last_name: document.getElementById("g-last").value.trim(),
     phone: document.getElementById("g-phone").value.trim(),
     email: document.getElementById("g-email").value.trim(),
     rsvp: document.getElementById("g-rsvp").value,
     people: parseInt(document.getElementById("g-people").value) || 1,
     notes: document.getElementById("g-notes").value.trim()
   });
+  if (error) { alert("Couldn't add guest: " + error.message); return; }
   ["g-first","g-last","g-phone","g-email","g-people","g-notes"].forEach(id => document.getElementById(id).value = "");
   document.getElementById("g-rsvp").value = "pending";
+  await loadEventsAndGuests();
+  const ev = eventById(eventId);
+  await createAnnouncement(eventId, "invitation", "🎉", "New event invitation received", `${firstName} was invited to ${ev ? ev.name : "your event"}.`);
   save();
 }
-function updateGuestRsvp(id, value) { const g = data.guests.find(g => g.id === id); if (g) { g.rsvp = value; save(); } }
-function removeGuest(id) { data.guests = data.guests.filter(g => g.id !== id); save(); }
+async function updateGuestRsvp(id, value) {
+  if (!currentUser) return;
+  const g = data.guests.find(g => g.id === id);
+  if (!g) return;
+  const previousRsvp = g.rsvp;
+  const { error } = await supabaseClient.from("guests").update({ rsvp: value }).eq("id", id);
+  if (error) { alert("Couldn't update RSVP: " + error.message); return; }
+  await loadEventsAndGuests();
+  if (previousRsvp !== "accepted" && value === "accepted") {
+    await createAnnouncement(g.eventId, "guest_joined", "👥", `${g.firstName} has joined the event`, "");
+  }
+  save();
+}
+async function sendRsvpReminder(id) {
+  if (!currentUser) return;
+  const g = data.guests.find(g => g.id === id);
+  if (!g) return;
+  await createAnnouncement(g.eventId, "rsvp_reminder", "🔔", "RSVP reminder", `Still waiting to hear from ${fullName(g)}.`);
+  alert("Reminder posted to the event's announcements.");
+}
+async function removeGuest(id) {
+  if (!currentUser) return;
+  const { error } = await supabaseClient.from("guests").delete().eq("id", id);
+  if (error) { alert("Couldn't remove guest: " + error.message); return; }
+  await loadEventsAndGuests();
+  save();
+}
 function rsvpPill(rsvp) {
   const map = { accepted: "bg-emerald-100 text-emerald-600", pending: "bg-amber-100 text-amber-600", declined: "bg-rose-100 text-rose-600" };
   return `<span class="pill ${map[rsvp]}">${rsvp}</span>`;
@@ -648,11 +772,168 @@ function renderGuests() {
       <td>${g.people}</td><td class="text-slate-500">${esc(g.notes)}</td>
       <td class="whitespace-nowrap">
         <button onclick="emailGuest('${g.id}')" title="Email" class="text-violet-500 hover:text-violet-700 mr-2"><i class="fa-solid fa-envelope"></i></button>
-        <button onclick="textGuest('${g.id}')" title="Text" class="text-emerald-500 hover:text-emerald-700"><i class="fa-solid fa-comment-sms"></i></button>
+        <button onclick="textGuest('${g.id}')" title="Text" class="text-emerald-500 hover:text-emerald-700 mr-2"><i class="fa-solid fa-comment-sms"></i></button>
+        ${g.rsvp === "pending" ? `<button onclick="sendRsvpReminder('${g.id}')" title="Post RSVP reminder" class="text-amber-500 hover:text-amber-700"><i class="fa-solid fa-bell"></i></button>` : ""}
       </td>
       <td><button onclick="removeGuest('${g.id}')" class="text-slate-400 hover:text-rose-500 text-xs font-semibold">remove</button></td>`;
     tbody.appendChild(tr);
   });
+}
+
+// ---------- event/guest sign-in gate ----------
+function updateEventGates() {
+  const signedIn = !!currentUser;
+  document.getElementById("events-gate").classList.toggle("hidden", signedIn);
+  document.getElementById("events-content").classList.toggle("hidden", !signedIn);
+  document.getElementById("guests-gate").classList.toggle("hidden", signedIn);
+  document.getElementById("guests-content").classList.toggle("hidden", !signedIn);
+}
+
+// ---------- announcements (Supabase-backed) ----------
+// Only reaches people connected to the event: RLS on the announcements table only lets
+// someone SELECT a row if they own the event or are a guest on it (matched by email).
+let announcements = [];
+let announcementReadIds = new Set();
+function mapAnnouncementRow(row) {
+  return { id: row.id, eventId: row.event_id, type: row.type, icon: row.icon, title: row.title, body: row.body || "", senderId: row.sender_id, createdAt: row.created_at };
+}
+async function loadAnnouncements() {
+  if (!supabaseClient || !currentUser) { announcements = []; announcementReadIds = new Set(); renderAnnouncements(); return; }
+  const { data: rows, error } = await supabaseClient.from("announcements").select("*").order("created_at", { ascending: false });
+  announcements = error ? [] : rows.map(mapAnnouncementRow);
+  if (error) console.error(error);
+  const { data: readRows, error: readErr } = await supabaseClient.from("announcement_reads").select("announcement_id").eq("user_id", currentUser.id);
+  announcementReadIds = readErr ? new Set() : new Set(readRows.map(r => r.announcement_id));
+  if (readErr) console.error(readErr);
+  renderAnnouncements();
+}
+async function createAnnouncement(eventId, type, icon, title, body) {
+  if (!supabaseClient || !currentUser || !eventId) return;
+  const { error } = await supabaseClient.from("announcements").insert({ event_id: eventId, type, icon, title, body: body || "", sender_id: currentUser.id });
+  if (error) { console.error(error); return; }
+  await loadAnnouncements();
+}
+async function checkBirthdayAnnouncements() {
+  if (!currentUser) return;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  for (const ev of data.events) {
+    if (ev.type !== "Birthday" || !ev.date) continue;
+    const [y, m, d] = ev.date.split("-").map(Number);
+    const eventDate = new Date(y, m - 1, d);
+    const daysAway = Math.round((eventDate - today) / (24 * 60 * 60 * 1000));
+    if (daysAway < 0 || daysAway > 3) continue;
+    const alreadyPosted = announcements.some(a => a.eventId === ev.id && a.type === "birthday_soon" && (Date.now() - new Date(a.createdAt).getTime()) < 24 * 60 * 60 * 1000);
+    if (alreadyPosted) continue;
+    const when = daysAway === 0 ? "today" : daysAway === 1 ? "tomorrow" : `in ${daysAway} days`;
+    await createAnnouncement(ev.id, "birthday_soon", "🎂", `${ev.name} is coming up ${when}`, "");
+  }
+}
+async function markAnnouncementRead(id) {
+  if (!currentUser || announcementReadIds.has(id)) return;
+  announcementReadIds.add(id);
+  renderAnnouncements();
+  const { error } = await supabaseClient.from("announcement_reads").upsert({ announcement_id: id, user_id: currentUser.id });
+  if (error) console.error(error);
+}
+function timeAgo(iso) {
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
+}
+function renderAnnouncements() {
+  const list = document.getElementById("announcements-list");
+  const signedOutMsg = document.getElementById("announcements-signed-out");
+  const emptyMsg = document.getElementById("announcements-empty");
+  if (!currentUser) {
+    list.innerHTML = "";
+    signedOutMsg.style.display = "block";
+    emptyMsg.style.display = "none";
+    updateBellBadge();
+    return;
+  }
+  signedOutMsg.style.display = "none";
+  emptyMsg.style.display = announcements.length ? "none" : "block";
+  list.innerHTML = announcements.slice(0, 20).map(a => {
+    const unread = !announcementReadIds.has(a.id);
+    const ev = eventById(a.eventId);
+    return `
+      <div onclick="openAnnouncementDetail('${a.id}')" class="flex items-start gap-3 py-2.5 px-2 -mx-2 rounded-lg cursor-pointer border-t border-slate-50 first:border-t-0 ${unread ? "bg-violet-50/60" : "hover:bg-slate-50"}">
+        <div class="w-9 h-9 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-lg shrink-0">${a.icon}</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center flex-wrap gap-2">
+            ${unread ? `<span class="pill bg-rose-100 text-rose-600">🔴 NEW</span>` : ""}
+            <p class="font-semibold ${unread ? "" : "text-slate-500"} truncate">${esc(a.title)}</p>
+            ${ev ? `<span class="pill bg-indigo-100 text-indigo-600">${esc(ev.name)}</span>` : ""}
+          </div>
+          ${a.body ? `<p class="text-xs text-slate-500 mt-0.5 truncate">${esc(a.body)}</p>` : ""}
+          <p class="text-[11px] text-slate-400 mt-0.5">${timeAgo(a.createdAt)}</p>
+        </div>
+        ${unread ? `<button onclick="event.stopPropagation(); markAnnouncementRead('${a.id}')" class="text-xs text-violet-600 font-semibold shrink-0">Mark as read</button>` : ""}
+      </div>`;
+  }).join("");
+  updateBellBadge();
+}
+function updateBellBadge() {
+  const badge = document.getElementById("bell-badge");
+  if (!currentUser) { badge.classList.add("hidden"); return; }
+  const unread = announcements.filter(a => !announcementReadIds.has(a.id)).length;
+  badge.textContent = unread > 9 ? "9+" : String(unread);
+  badge.classList.toggle("hidden", unread === 0);
+}
+function goToAnnouncements() {
+  goTab("dashboard");
+  setTimeout(() => document.getElementById("dash-announcements").scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+}
+function openAnnouncementDetail(id) {
+  const a = announcements.find(a => a.id === id);
+  if (!a) return;
+  const ev = eventById(a.eventId);
+  document.getElementById("ann-detail-title").textContent = `${a.icon} ${a.title}`;
+  document.getElementById("ann-detail-body").textContent = a.body || "No additional details.";
+  document.getElementById("ann-detail-event").textContent = ev ? ev.name : "—";
+  document.getElementById("ann-detail-date").textContent = ev && ev.date ? formatDateDisplay(ev.date) : "—";
+  document.getElementById("ann-detail-venue").textContent = ev && ev.location ? ev.location : "—";
+  document.getElementById("ann-detail-sender").textContent = a.senderId && currentUser && a.senderId === currentUser.id ? "You" : "Event host";
+  const connected = data.guests.filter(g => g.eventId === a.eventId);
+  document.getElementById("ann-detail-recipients").textContent = connected.length ? connected.map(g => fullName(g)).join(", ") : "Event owner only";
+  markAnnouncementRead(id);
+  document.getElementById("announcement-modal").classList.remove("hidden");
+  document.getElementById("announcement-modal").classList.add("flex");
+}
+function closeAnnouncementModal() {
+  document.getElementById("announcement-modal").classList.add("hidden");
+  document.getElementById("announcement-modal").classList.remove("flex");
+}
+let composerEventId = null;
+function openAnnouncementComposer(eventId, eventName) {
+  composerEventId = eventId;
+  document.getElementById("ann-compose-event-name").textContent = eventName;
+  document.getElementById("ann-compose-title").value = "";
+  document.getElementById("ann-compose-body").value = "";
+  document.getElementById("ann-compose-icon").value = "📢";
+  document.getElementById("ann-compose-error").classList.add("hidden");
+  document.getElementById("ann-compose-modal").classList.remove("hidden");
+  document.getElementById("ann-compose-modal").classList.add("flex");
+}
+function closeAnnouncementComposer() {
+  document.getElementById("ann-compose-modal").classList.add("hidden");
+  document.getElementById("ann-compose-modal").classList.remove("flex");
+}
+async function submitAnnouncementComposer() {
+  const title = document.getElementById("ann-compose-title").value.trim();
+  if (!title) {
+    const el = document.getElementById("ann-compose-error");
+    el.textContent = "Enter a title.";
+    el.classList.remove("hidden");
+    return;
+  }
+  const icon = document.getElementById("ann-compose-icon").value;
+  const body = document.getElementById("ann-compose-body").value.trim();
+  await createAnnouncement(composerEventId, "custom", icon, title, body);
+  closeAnnouncementComposer();
 }
 
 // ---------- budget ----------
@@ -1226,6 +1507,7 @@ function renderCalendar() {
 }
 
 function renderAll() {
+  updateEventGates();
   renderFamily();
   renderEvents();
   renderGuests();
@@ -1236,6 +1518,7 @@ function renderAll() {
   renderThemes();
   renderDashboard();
   renderCalendar();
+  renderAnnouncements();
   scheduleReminders();
 }
 renderAll();
@@ -1359,7 +1642,7 @@ async function submitAuth(evt) {
   }
   closeAuthModal();
   if (data.session) {
-    showLoggedIn(data.user);
+    onUserSignedIn(data.user);
   } else if (isSignup) {
     alert("Almost there — check your email to confirm your account, then sign in.");
   }
@@ -1375,17 +1658,65 @@ function showLoggedOut() {
   document.getElementById("account-user").classList.remove("flex");
   document.getElementById("account-guest").classList.remove("hidden");
 }
+// Events/guests/announcements only exist once someone's signed in (see the plan notes at
+// the top of the events section) — this loads them and offers a one-time import of any
+// events that were sitting in localStorage from before this feature existed.
+async function onUserSignedIn(user) {
+  currentUser = user;
+  showLoggedIn(user);
+  updateEventGates();
+  const localEventsSnapshot = data.events.filter(e => !e.ownerId);
+  const localGuestsSnapshot = data.guests.slice();
+  await loadEventsAndGuests();
+  await checkBirthdayAnnouncements();
+  await loadAnnouncements();
+  save();
+  if (!localStorage.getItem("eventsImportHandled")) {
+    localStorage.setItem("eventsImportHandled", "1");
+    if (localEventsSnapshot.length && confirm(`You have ${localEventsSnapshot.length} event(s) saved locally in this browser. Import them into your account?`)) {
+      await importLocalEvents(localEventsSnapshot, localGuestsSnapshot);
+    }
+  }
+}
+function onUserSignedOut() {
+  currentUser = null;
+  data.events = [];
+  data.guests = [];
+  announcements = [];
+  announcementReadIds = new Set();
+  showLoggedOut();
+  updateEventGates();
+  save();
+}
+async function importLocalEvents(events, guests) {
+  for (const ev of events) {
+    const { data: inserted, error } = await supabaseClient.from("events").insert({
+      owner_id: currentUser.id, name: ev.name, type: ev.type, date: ev.date || null,
+      location: ev.location, budget: ev.budget, description: ev.description
+    }).select().single();
+    if (error || !inserted) { console.error(error); continue; }
+    for (const g of guests.filter(g => g.eventId === ev.id)) {
+      await supabaseClient.from("guests").insert({
+        event_id: inserted.id, first_name: g.firstName, last_name: g.lastName, phone: g.phone,
+        email: g.email, rsvp: g.rsvp, people: g.people, notes: g.notes
+      });
+    }
+  }
+  await loadEventsAndGuests();
+  save();
+  alert("Import complete!");
+}
 async function logout() {
   if (supabaseClient) await supabaseClient.auth.signOut();
-  showLoggedOut();
+  onUserSignedOut();
 }
 if (supabaseClient) {
   supabaseClient.auth.getSession().then(({ data }) => {
-    if (data.session) showLoggedIn(data.session.user);
+    if (data.session) onUserSignedIn(data.session.user);
   });
   supabaseClient.auth.onAuthStateChange((event, session) => {
     if (event === "PASSWORD_RECOVERY") { openAuthModal("reset"); return; }
-    if (session) showLoggedIn(session.user); else showLoggedOut();
+    if (session) onUserSignedIn(session.user); else onUserSignedOut();
   });
 }
 
