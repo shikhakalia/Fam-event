@@ -156,16 +156,6 @@
 
     <!-- DASHBOARD PANEL -->
     <section class="panel active" id="panel-dashboard">
-      <div id="dash-announcements" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-5">
-        <div class="flex items-center justify-between mb-3">
-          <h4 class="font-bold">📢 Recent Announcements</h4>
-          <a href="#" onclick="goTab('announcements');return false;" class="text-xs text-violet-600 font-medium">View all</a>
-        </div>
-        <div id="announcements-signed-out" class="hidden text-slate-400 text-sm py-2 text-center">Sign in to see announcements for your events.</div>
-        <div id="announcements-list" class="space-y-2 text-sm"></div>
-        <p class="text-slate-400 text-sm py-2 text-center" id="announcements-empty">No announcements yet.</p>
-      </div>
-
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
           <div class="flex items-center justify-between mb-3">
@@ -889,9 +879,6 @@ function setAnnouncementFilter(filter) {
   renderAnnouncements();
 }
 function renderAnnouncements() {
-  const dashList = document.getElementById("announcements-list");
-  const signedOutMsg = document.getElementById("announcements-signed-out");
-  const emptyMsg = document.getElementById("announcements-empty");
   const pageGate = document.getElementById("announcements-page-gate");
   const pageContent = document.getElementById("announcements-page-content");
   const pageList = document.getElementById("announcements-page-list");
@@ -901,18 +888,11 @@ function renderAnnouncements() {
   pageContent.classList.toggle("hidden", !currentUser);
 
   if (!currentUser) {
-    dashList.innerHTML = "";
-    signedOutMsg.style.display = "block";
-    emptyMsg.style.display = "none";
     pageList.innerHTML = "";
     pageEmpty.style.display = "none";
     updateBellBadge();
     return;
   }
-
-  signedOutMsg.style.display = "none";
-  emptyMsg.style.display = announcements.length ? "none" : "block";
-  dashList.innerHTML = announcements.slice(0, 5).map(announcementRowHtml).join("");
 
   document.querySelectorAll("#announcements-filter button").forEach(btn => {
     const active = btn.dataset.filter === announcementFilter;
