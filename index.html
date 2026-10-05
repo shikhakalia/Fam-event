@@ -149,6 +149,35 @@
   </div>
 </div>
 
+<!-- CLAIM GIFT MODAL -->
+<div id="claim-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative">
+    <button type="button" onclick="closeClaimModal()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+    <h3 class="text-xl font-bold mb-1">I'll get this! 🎁</h3>
+    <p class="text-sm text-slate-500 mb-4" id="claim-gift-name"></p>
+    <div id="claim-error" class="hidden text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2 mb-3"></div>
+    <div class="space-y-3">
+      <input id="claim-name" placeholder="Your name" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+      <input id="claim-email" type="email" placeholder="Your email (optional)" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+      <input id="claim-amount" type="number" placeholder="Amount you're contributing $" class="hidden w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+      <button type="button" onclick="submitClaim()" class="w-full bg-violet-600 text-white font-semibold py-2 rounded-lg hover:bg-violet-700">Claim it</button>
+    </div>
+  </div>
+</div>
+
+<!-- PUBLIC SHARE REGISTRY VIEW (no sign-in needed) -->
+<div id="public-registry-view" class="hidden fixed inset-0 z-[60] bg-[#FFFBF5] overflow-y-auto">
+  <div class="max-w-2xl mx-auto px-6 py-10">
+    <div class="text-center mb-6">
+      <i class="fa-solid fa-gift text-3xl text-violet-600 mb-2"></i>
+      <h1 class="text-2xl font-extrabold" id="public-reg-event-name"></h1>
+      <p class="text-slate-500 text-sm mt-1" id="public-reg-event-meta"></p>
+    </div>
+    <div id="public-reg-error" class="hidden text-center text-rose-600 text-sm bg-rose-50 border border-rose-100 rounded-lg px-3 py-2 mb-4"></div>
+    <div id="public-reg-list" class="space-y-3"></div>
+  </div>
+</div>
+
 <!-- HERO -->
 <header class="max-w-7xl mx-auto px-6 pt-10 pb-6 text-center">
   <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">All-in-One Platform for</h1>
@@ -177,6 +206,7 @@
       <a href="#" data-tab="budget" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-wallet w-4"></i>Budget</a>
       <a href="#" data-tab="travel" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-plane w-4"></i>Travel</a>
       <a href="#" data-tab="tasks" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-square-check w-4"></i>Tasks</a>
+      <a href="#" data-tab="registry" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-gift w-4"></i>Gift Registry</a>
       <a href="#" data-tab="soon" data-title="Themes & Decor" data-icon="fa-palette" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-palette w-4"></i>Themes & Decor</a>
       <a href="#" data-tab="notes" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-note-sticky w-4"></i>Notes</a>
       <a href="#" data-tab="announcements" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-bullhorn w-4"></i>Announcements</a>
@@ -391,6 +421,56 @@
           <tbody id="travel-table"></tbody>
         </table>
         <p class="text-slate-400 text-sm py-2 text-center" id="travel-empty">No travel info added for this event yet.</p>
+      </div>
+    </section>
+
+    <!-- GIFT REGISTRY PANEL -->
+    <section class="panel" id="panel-registry">
+      <div id="registry-gate" class="hidden bg-white rounded-2xl border border-slate-100 shadow-sm p-8 text-center">
+        <div class="w-14 h-14 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center mx-auto mb-3 text-xl"><i class="fa-solid fa-lock"></i></div>
+        <h4 class="font-bold text-lg">Sign in to manage a registry</h4>
+        <p class="text-slate-500 text-sm mt-1 max-w-sm mx-auto">Registries are tied to your signed-in events. <button type="button" onclick="openAuthModal('signin')" class="text-violet-600 font-semibold">Sign in</button> or <button type="button" onclick="openAuthModal('signup')" class="text-violet-600 font-semibold">sign up</button>.</p>
+      </div>
+      <div id="registry-content">
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-5">
+          <div class="flex items-center gap-2 mb-4 flex-wrap">
+            <span class="text-sm font-semibold text-slate-500">Event:</span>
+            <select id="registry-event-picker" onchange="renderRegistry()" class="px-3 py-2 border border-violet-200 bg-violet-50 text-violet-700 font-semibold rounded-lg text-sm"></select>
+            <label class="flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer ml-auto">
+              <input type="checkbox" id="registry-surprise-mode" onchange="toggleSurpriseMode()" class="w-4 h-4 accent-violet-600 cursor-pointer"> Surprise mode (hide claims from me)
+            </label>
+            <button onclick="shareRegistry()" class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold hover:bg-slate-200"><i class="fa-solid fa-link mr-1"></i>Copy share link</button>
+          </div>
+          <div id="registry-claimed-summary" class="text-xs text-slate-500 mb-3"></div>
+          <h4 class="font-bold mb-3"><i class="fa-solid fa-gift text-violet-600 mr-1"></i> Add a gift</h4>
+          <div class="flex flex-wrap gap-2 mb-2">
+            <input id="gift-name" placeholder="Gift name" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <input id="gift-link" placeholder="Link (optional)" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <input id="gift-price" type="number" placeholder="Price $" class="w-28 px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          </div>
+          <div class="flex flex-wrap gap-2 mb-2">
+            <input id="gift-photo" placeholder="Photo URL (optional)" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <input id="gift-quantity" type="number" min="1" value="1" placeholder="Qty" class="w-20 px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <select id="gift-priority" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+              <option value="nice-to-have">Nice-to-have</option>
+              <option value="must-have">Must-have</option>
+            </select>
+          </div>
+          <div class="flex flex-wrap gap-2 items-center">
+            <label class="flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer">
+              <input type="checkbox" id="gift-poolable" onchange="document.getElementById('gift-target-wrap').classList.toggle('hidden', !this.checked)" class="w-4 h-4 accent-violet-600 cursor-pointer"> Cash fund / group gift
+            </label>
+            <span id="gift-target-wrap" class="hidden">
+              <input id="gift-target" type="number" placeholder="Target amount $" class="w-36 px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            </span>
+            <button onclick="addGift()" class="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 ml-auto">Add gift</button>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <h4 class="font-bold mb-3">Registry</h4>
+          <div class="space-y-3 text-sm" id="registry-list"></div>
+          <p class="text-slate-400 text-sm py-2 text-center" id="registry-empty">No gifts added yet.</p>
+        </div>
       </div>
     </section>
 
@@ -676,8 +756,9 @@ if (!data.travel) data.travel = [];
 if (!data.decor) data.decor = {};
 if (!data.tasks) data.tasks = [];
 if (!data.notes) data.notes = [];
-// Events/guests/announcements are Supabase-backed (require sign-in) rather than local —
-// see the "events (Supabase-backed)" and "announcements" sections below.
+// Events/guests/announcements/gifts are Supabase-backed (require sign-in) rather than
+// local — see the "events (Supabase-backed)", "announcements", and "gift registry"
+// sections below.
 let currentUser = null;
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); renderAll(); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
@@ -749,7 +830,7 @@ function renderFamily() {
 
 // ---------- events (Supabase-backed — requires sign-in; see plan for schema) ----------
 function mapEventRow(row) {
-  return { id: row.id, name: row.name, type: row.type, date: row.date || "", location: row.location || "", budget: Number(row.budget) || 0, description: row.description || "", ownerId: row.owner_id };
+  return { id: row.id, name: row.name, type: row.type, date: row.date || "", location: row.location || "", budget: Number(row.budget) || 0, description: row.description || "", ownerId: row.owner_id, surpriseMode: !!row.surprise_mode, shareToken: row.share_token };
 }
 function mapGuestRow(row) {
   return { id: row.id, eventId: row.event_id, firstName: row.first_name, lastName: row.last_name || "", phone: row.phone || "", email: row.email || "", rsvp: row.rsvp, people: row.people, notes: row.notes || "" };
@@ -814,7 +895,7 @@ function renderEvents() {
   populateEventPickers();
 }
 function populateEventPickers() {
-  ["guest-event-picker","budget-event-picker","travel-event-picker","theme-event-picker"].forEach(pid => {
+  ["guest-event-picker","budget-event-picker","travel-event-picker","theme-event-picker","registry-event-picker"].forEach(pid => {
     const sel = document.getElementById(pid);
     const prev = sel.value;
     sel.innerHTML = "";
@@ -949,6 +1030,8 @@ function updateEventGates() {
   document.getElementById("events-content").classList.toggle("hidden", !signedIn);
   document.getElementById("guests-gate").classList.toggle("hidden", signedIn);
   document.getElementById("guests-content").classList.toggle("hidden", !signedIn);
+  document.getElementById("registry-gate").classList.toggle("hidden", signedIn);
+  document.getElementById("registry-content").classList.toggle("hidden", !signedIn);
 }
 
 // ---------- announcements (Supabase-backed) ----------
@@ -1139,6 +1222,279 @@ async function submitAnnouncementComposer() {
   const body = document.getElementById("ann-compose-body").value.trim();
   await createAnnouncement(composerEventId, "custom", icon, title, body);
   closeAnnouncementComposer();
+}
+
+// ---------- gift registry (Supabase-backed) ----------
+// Surprise mode: RLS on gift_claims denies the owner SELECT access entirely when an
+// event's surprise_mode is on — so data.giftClaims simply comes back empty for the owner
+// in that state (not just hidden client-side). The gift_claim_counts() RPC is the one
+// owner-only exception: it returns aggregate counts (no claimer identity) so the host can
+// still see "3 of 8 claimed" without learning who claimed what.
+let gifts = [];
+let giftClaims = [];
+let ownerClaimCounts = null;
+function mapGiftRow(row) {
+  return { id: row.id, eventId: row.event_id, name: row.name, link: row.link || "", price: Number(row.price) || 0, photoUrl: row.photo_url || "", quantity: row.quantity || 1, priority: row.priority, isPoolable: !!row.is_poolable, targetAmount: Number(row.target_amount) || 0, thanked: !!row.thanked };
+}
+function mapClaimRow(row) {
+  return { id: row.id, giftId: row.gift_id, claimerName: row.claimer_name, claimerEmail: row.claimer_email, claimerUserId: row.claimer_user_id, amount: row.amount == null ? null : Number(row.amount), status: row.status };
+}
+async function loadGiftsAndClaims() {
+  if (!supabaseClient || !currentUser) { gifts = []; giftClaims = []; ownerClaimCounts = null; return; }
+  const [giftsRes, claimsRes] = await Promise.all([
+    supabaseClient.from("gifts").select("*").order("created_at", { ascending: true }),
+    supabaseClient.from("gift_claims").select("*")
+  ]);
+  gifts = giftsRes.error ? [] : giftsRes.data.map(mapGiftRow);
+  giftClaims = claimsRes.error ? [] : claimsRes.data.map(mapClaimRow);
+  if (giftsRes.error) console.error(giftsRes.error);
+  if (claimsRes.error) console.error(claimsRes.error);
+}
+async function loadOwnerClaimCounts(eventId) {
+  ownerClaimCounts = null;
+  if (!eventId) return;
+  const { data: rows, error } = await supabaseClient.rpc("gift_claim_counts", { p_event_id: eventId });
+  if (error) { console.error(error); return; }
+  ownerClaimCounts = rows && rows[0] ? rows[0] : null;
+}
+async function addGift() {
+  if (!currentUser) return;
+  const eventId = document.getElementById("registry-event-picker").value;
+  const name = document.getElementById("gift-name").value.trim();
+  if (!eventId || !name) return;
+  const { error } = await supabaseClient.from("gifts").insert({
+    event_id: eventId, name,
+    link: document.getElementById("gift-link").value.trim(),
+    price: parseFloat(document.getElementById("gift-price").value) || null,
+    photo_url: document.getElementById("gift-photo").value.trim(),
+    quantity: parseInt(document.getElementById("gift-quantity").value) || 1,
+    priority: document.getElementById("gift-priority").value,
+    is_poolable: document.getElementById("gift-poolable").checked,
+    target_amount: parseFloat(document.getElementById("gift-target").value) || null
+  });
+  if (error) { alert("Couldn't add gift: " + error.message); return; }
+  ["gift-name","gift-link","gift-price","gift-photo","gift-target"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("gift-quantity").value = "1";
+  document.getElementById("gift-priority").value = "nice-to-have";
+  document.getElementById("gift-poolable").checked = false;
+  document.getElementById("gift-target-wrap").classList.add("hidden");
+  await loadGiftsAndClaims();
+  save();
+}
+async function removeGift(id) {
+  if (!currentUser) return;
+  if (!confirm("Remove this gift and any claims on it?")) return;
+  const { error } = await supabaseClient.from("gifts").delete().eq("id", id);
+  if (error) { alert("Couldn't remove gift: " + error.message); return; }
+  await loadGiftsAndClaims();
+  save();
+}
+async function toggleGiftThanked(id, thanked) {
+  if (!currentUser) return;
+  const { error } = await supabaseClient.from("gifts").update({ thanked }).eq("id", id);
+  if (error) { alert("Couldn't update: " + error.message); return; }
+  await loadGiftsAndClaims();
+  save();
+}
+let claimTargetGiftId = null;
+let claimIsPublic = false;
+function openClaimModal(giftId, isPublic) {
+  claimTargetGiftId = giftId;
+  claimIsPublic = !!isPublic;
+  const gift = isPublic ? publicRegistryGifts.find(g => g.gift_id === giftId) : gifts.find(g => g.id === giftId);
+  document.getElementById("claim-gift-name").textContent = gift ? gift.name || gift.gift_name : "";
+  document.getElementById("claim-name").value = "";
+  document.getElementById("claim-email").value = "";
+  document.getElementById("claim-amount").value = "";
+  document.getElementById("claim-amount").classList.toggle("hidden", !(gift && (gift.isPoolable || gift.is_poolable)));
+  document.getElementById("claim-error").classList.add("hidden");
+  document.getElementById("claim-modal").classList.remove("hidden");
+  document.getElementById("claim-modal").classList.add("flex");
+}
+function closeClaimModal() {
+  document.getElementById("claim-modal").classList.add("hidden");
+  document.getElementById("claim-modal").classList.remove("flex");
+}
+async function submitClaim() {
+  const name = document.getElementById("claim-name").value.trim();
+  const email = document.getElementById("claim-email").value.trim();
+  const amountRaw = document.getElementById("claim-amount").value;
+  const amount = amountRaw ? parseFloat(amountRaw) : null;
+  const errEl = document.getElementById("claim-error");
+  if (!name) { errEl.textContent = "Enter your name."; errEl.classList.remove("hidden"); return; }
+
+  if (claimIsPublic) {
+    const { error } = await supabaseClient.rpc("claim_gift_public", { p_token: publicRegistryToken, p_gift_id: claimTargetGiftId, p_name: name, p_email: email || null, p_amount: amount });
+    if (error) { errEl.textContent = error.message; errEl.classList.remove("hidden"); return; }
+    closeClaimModal();
+    await loadPublicRegistry(publicRegistryToken);
+    return;
+  }
+
+  if (!currentUser) return;
+  const { error } = await supabaseClient.from("gift_claims").insert({
+    gift_id: claimTargetGiftId, claimer_name: name, claimer_email: email || currentUser.email,
+    claimer_user_id: currentUser.id, amount, status: "claimed"
+  });
+  if (error) { errEl.textContent = error.message; errEl.classList.remove("hidden"); return; }
+  closeClaimModal();
+  await loadGiftsAndClaims();
+  save();
+}
+async function updateClaimStatus(claimId, status) {
+  const { error } = await supabaseClient.from("gift_claims").update({ status }).eq("id", claimId);
+  if (error) { alert("Couldn't update: " + error.message); return; }
+  await loadGiftsAndClaims();
+  save();
+}
+async function removeClaim(id) {
+  if (!confirm("Cancel this claim?")) return;
+  const { error } = await supabaseClient.from("gift_claims").delete().eq("id", id);
+  if (error) { alert("Couldn't cancel claim: " + error.message); return; }
+  await loadGiftsAndClaims();
+  save();
+}
+async function toggleSurpriseMode() {
+  const eventId = document.getElementById("registry-event-picker").value;
+  const on = document.getElementById("registry-surprise-mode").checked;
+  if (!eventId) return;
+  const { error } = await supabaseClient.from("events").update({ surprise_mode: on }).eq("id", eventId);
+  if (error) { alert("Couldn't update: " + error.message); return; }
+  await loadEventsAndGuests();
+  save();
+}
+async function shareRegistry() {
+  const eventId = document.getElementById("registry-event-picker").value;
+  const ev = eventById(eventId);
+  if (!ev) return;
+  const url = `${location.origin}${location.pathname}?registry=${ev.shareToken}`;
+  try { await navigator.clipboard.writeText(url); alert("Share link copied:\n" + url); }
+  catch (err) { prompt("Copy this share link:", url); }
+  const alreadyAnnounced = announcements.some(a => a.eventId === eventId && a.type === "registry_live");
+  const eventGifts = gifts.filter(g => g.eventId === eventId);
+  if (!alreadyAnnounced && eventGifts.length) {
+    await createAnnouncement(eventId, "registry_live", "🎁", `${ev.name}'s gift registry is live`, "Check it out and claim a gift so nobody doubles up!");
+  }
+}
+async function checkRegistryReminders() {
+  if (!currentUser) return;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  for (const ev of data.events) {
+    if (!ev.date) continue;
+    const [y, m, d] = ev.date.split("-").map(Number);
+    const daysAway = Math.round((new Date(y, m - 1, d) - today) / (24 * 60 * 60 * 1000));
+    if (daysAway < 0 || daysAway > 3) continue;
+    const eventGifts = gifts.filter(g => g.eventId === ev.id);
+    if (!eventGifts.length) continue;
+    const hasUnclaimed = eventGifts.some(g => !g.isPoolable && giftClaims.filter(c => c.giftId === g.id).length < g.quantity);
+    if (!hasUnclaimed) continue;
+    const alreadyPosted = announcements.some(a => a.eventId === ev.id && a.type === "registry_reminder" && (Date.now() - new Date(a.createdAt).getTime()) < 24 * 60 * 60 * 1000);
+    if (alreadyPosted) continue;
+    await createAnnouncement(ev.id, "registry_reminder", "🎁", `Don't forget ${ev.name}'s gift registry`, "There are still unclaimed gifts.");
+  }
+}
+function giftStatusBadge(gift, claims, isOwnerSurprised) {
+  if (isOwnerSurprised) return `<span class="pill bg-violet-100 text-violet-700">🎉 Hidden (surprise mode)</span>`;
+  if (gift.isPoolable) return "";
+  const purchased = claims.filter(c => c.status === "purchased").length;
+  const claimed = claims.length;
+  if (purchased >= gift.quantity) return `<span class="pill bg-emerald-100 text-emerald-600">Purchased</span>`;
+  if (claimed >= gift.quantity) return `<span class="pill bg-amber-100 text-amber-600">Claimed</span>`;
+  return `<span class="pill bg-slate-100 text-slate-600">Available</span>`;
+}
+function giftCardHtml(gift, isOwner, isOwnerSurprised) {
+  const claims = giftClaims.filter(c => c.giftId === gift.id);
+  const myClaim = currentUser ? claims.find(c => c.claimerUserId === currentUser.id) : null;
+  const canClaim = !isOwner && !myClaim && (gift.isPoolable || claims.length < gift.quantity);
+  const priorityPill = gift.priority === "must-have" ? `<span class="pill bg-rose-100 text-rose-600">Must-have</span>` : `<span class="pill bg-slate-100 text-slate-500">Nice-to-have</span>`;
+  const pooled = claims.reduce((s, c) => s + (c.amount || 0), 0);
+  return `
+    <div class="flex items-start gap-3 py-3 border-t border-slate-50 first:border-t-0">
+      ${gift.photoUrl ? `<img src="${esc(gift.photoUrl)}" class="w-14 h-14 rounded-lg object-cover bg-slate-100 shrink-0">` : `<div class="w-14 h-14 rounded-lg bg-slate-100 flex items-center justify-center text-xl shrink-0">🎁</div>`}
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center flex-wrap gap-2">
+          <p class="font-semibold">${esc(gift.name)}</p>
+          ${priorityPill}
+          ${giftStatusBadge(gift, claims, isOwnerSurprised)}
+          ${gift.quantity > 1 ? `<span class="text-xs text-slate-400">x${gift.quantity}</span>` : ""}
+        </div>
+        <p class="text-xs text-slate-400 mt-0.5">${gift.price ? "$" + gift.price.toFixed(0) : ""}${gift.link ? ` · <a href="${esc(gift.link)}" target="_blank" rel="noopener" class="text-violet-600 underline">view item</a>` : ""}</p>
+        ${gift.isPoolable ? `<div class="mt-1.5"><div class="h-2 rounded-full bg-slate-100 overflow-hidden"><div class="h-full bg-violet-600" style="width:${gift.targetAmount ? Math.min(100, pooled / gift.targetAmount * 100) : 0}%"></div></div><p class="text-[11px] text-slate-400 mt-0.5">$${pooled.toFixed(0)} of $${gift.targetAmount.toFixed(0)} raised</p></div>` : ""}
+        ${!isOwnerSurprised && claims.length ? `<div class="mt-1 space-y-0.5">${claims.map(c => `<p class="text-xs text-slate-500">${esc(c.claimerName)}${c.amount ? ` — $${c.amount.toFixed(0)}` : ""} ${c.status === "purchased" ? "✅ purchased" : ""} ${currentUser && c.claimerUserId === currentUser.id ? `<button onclick="updateClaimStatus('${c.id}','purchased')" class="text-violet-600 font-semibold ml-1">${c.status === "purchased" ? "" : "mark purchased"}</button> <button onclick="removeClaim('${c.id}')" class="text-rose-500 font-semibold ml-1">cancel</button>` : ""}</p>`).join("")}</div>` : ""}
+      </div>
+      <div class="flex flex-col items-end gap-1 shrink-0">
+        ${canClaim ? `<button onclick="openClaimModal('${gift.id}', false)" class="px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700">I'll get this</button>` : ""}
+        ${isOwner ? `<label class="flex items-center gap-1 text-[11px] text-slate-400 cursor-pointer"><input type="checkbox" ${gift.thanked ? "checked" : ""} onchange="toggleGiftThanked('${gift.id}', this.checked)" class="w-3.5 h-3.5 accent-violet-600"> thank-you sent</label>` : ""}
+        ${isOwner ? `<button onclick="removeGift('${gift.id}')" class="text-slate-400 hover:text-rose-500 text-xs font-semibold">remove</button>` : ""}
+      </div>
+    </div>`;
+}
+async function renderRegistry() {
+  const eventId = document.getElementById("registry-event-picker").value;
+  const list = document.getElementById("registry-list");
+  const summary = document.getElementById("registry-claimed-summary");
+  document.getElementById("registry-empty").style.display = "none";
+  list.innerHTML = "";
+  summary.innerHTML = "";
+  if (!eventId || !currentUser) return;
+  const ev = eventById(eventId);
+  const isOwner = ev && ev.ownerId === currentUser.id;
+  document.getElementById("registry-surprise-mode").checked = !!(ev && ev.surpriseMode);
+  const isOwnerSurprised = isOwner && ev && ev.surpriseMode;
+  if (isOwnerSurprised) {
+    await loadOwnerClaimCounts(eventId);
+    if (ownerClaimCounts) summary.textContent = `🎁 ${ownerClaimCounts.claimed_count} of ${ownerClaimCounts.total_gifts} gifts claimed, ${ownerClaimCounts.purchased_count} purchased — details hidden while surprise mode is on.`;
+  }
+  const eventGifts = gifts.filter(g => g.eventId === eventId);
+  document.getElementById("registry-empty").style.display = eventGifts.length ? "none" : "block";
+  list.innerHTML = eventGifts.map(g => giftCardHtml(g, isOwner, isOwnerSurprised)).join("");
+}
+
+// ---------- public gift registry (no sign-in needed) ----------
+let publicRegistryToken = null;
+let publicRegistryGifts = [];
+function isPublicRegistryMode() {
+  return new URLSearchParams(location.search).get("registry");
+}
+async function loadPublicRegistry(token) {
+  const errEl = document.getElementById("public-reg-error");
+  const { data: rows, error } = await supabaseClient.rpc("get_shared_registry", { p_token: token });
+  if (error || !rows || !rows.length) {
+    errEl.textContent = "This registry link isn't valid, or has no gifts yet.";
+    errEl.classList.remove("hidden");
+    document.getElementById("public-reg-list").innerHTML = "";
+    return;
+  }
+  errEl.classList.add("hidden");
+  publicRegistryGifts = rows;
+  document.getElementById("public-reg-event-name").textContent = rows[0].event_name;
+  document.getElementById("public-reg-event-meta").textContent = [rows[0].event_date, rows[0].event_location].filter(Boolean).join(" · ");
+  document.getElementById("public-reg-list").innerHTML = rows.map(g => {
+    const pooled = g.pooled_amount || 0;
+    const available = g.is_poolable || g.claimed_count < g.gift_quantity;
+    return `
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-start gap-3">
+        ${g.gift_photo ? `<img src="${esc(g.gift_photo)}" class="w-14 h-14 rounded-lg object-cover bg-slate-100 shrink-0">` : `<div class="w-14 h-14 rounded-lg bg-slate-100 flex items-center justify-center text-xl shrink-0">🎁</div>`}
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center flex-wrap gap-2">
+            <p class="font-semibold">${esc(g.gift_name)}</p>
+            ${g.gift_priority === "must-have" ? `<span class="pill bg-rose-100 text-rose-600">Must-have</span>` : ""}
+            ${!g.is_poolable ? (g.purchased_count >= g.gift_quantity ? `<span class="pill bg-emerald-100 text-emerald-600">Purchased</span>` : g.claimed_count >= g.gift_quantity ? `<span class="pill bg-amber-100 text-amber-600">Claimed</span>` : `<span class="pill bg-slate-100 text-slate-600">Available</span>`) : ""}
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">${g.gift_price ? "$" + Number(g.gift_price).toFixed(0) : ""}${g.gift_link ? ` · <a href="${esc(g.gift_link)}" target="_blank" rel="noopener" class="text-violet-600 underline">view item</a>` : ""}</p>
+          ${g.is_poolable ? `<div class="mt-1.5"><div class="h-2 rounded-full bg-slate-100 overflow-hidden"><div class="h-full bg-violet-600" style="width:${g.target_amount ? Math.min(100, pooled / g.target_amount * 100) : 0}%"></div></div><p class="text-[11px] text-slate-400 mt-0.5">$${pooled.toFixed(0)} of $${Number(g.target_amount || 0).toFixed(0)} raised</p></div>` : ""}
+        </div>
+        ${available ? `<button onclick="openClaimModal('${g.gift_id}', true)" class="px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700 shrink-0">I'll get this</button>` : ""}
+      </div>`;
+  }).join("");
+}
+function initPublicRegistryIfNeeded() {
+  const token = isPublicRegistryMode();
+  if (!token || !supabaseClient) return false;
+  publicRegistryToken = token;
+  document.getElementById("public-registry-view").classList.remove("hidden");
+  loadPublicRegistry(token);
+  return true;
 }
 
 // ---------- budget ----------
@@ -1703,12 +2059,15 @@ function renderDashboard() {
   const detailsDiv = document.getElementById("side-event-details");
   if (next) {
     const guestCount = data.guests.filter(g => g.eventId === next.id).length;
+    const nextGifts = gifts.filter(g => g.eventId === next.id);
+    const claimedGifts = nextGifts.filter(g => giftClaims.some(c => c.giftId === g.id)).length;
     detailsDiv.innerHTML = `
       <div class="flex justify-between"><span class="text-slate-400">Event</span><span class="font-medium">${esc(next.name)}</span></div>
       <div class="flex justify-between"><span class="text-slate-400">Date</span><span class="font-medium">${esc(next.date)}</span></div>
       <div class="flex justify-between"><span class="text-slate-400">Location</span><span class="font-medium">${esc(next.location)||"—"}</span></div>
       <div class="flex justify-between"><span class="text-slate-400">Budget</span><span class="font-medium">$${next.budget.toFixed(0)}</span></div>
-      <div class="flex justify-between"><span class="text-slate-400">Guests</span><span class="font-medium">${guestCount}</span></div>`;
+      <div class="flex justify-between"><span class="text-slate-400">Guests</span><span class="font-medium">${guestCount}</span></div>
+      ${nextGifts.length ? `<div class="flex justify-between"><span class="text-slate-400">🎁 Gifts claimed</span><span class="font-medium">${claimedGifts}/${nextGifts.length}</span></div>` : ""}`;
   } else {
     detailsDiv.innerHTML = `<p class="text-slate-400">No upcoming event yet.</p>`;
   }
@@ -1882,6 +2241,7 @@ function renderAll() {
   renderCalendar();
   renderAnnouncements();
   renderSettings();
+  renderRegistry();
   scheduleReminders();
 }
 renderAll();
@@ -2031,7 +2391,9 @@ async function onUserSignedIn(user) {
   const localEventsSnapshot = data.events.filter(e => !e.ownerId);
   const localGuestsSnapshot = data.guests.slice();
   await loadEventsAndGuests();
+  await loadGiftsAndClaims();
   await checkBirthdayAnnouncements();
+  await checkRegistryReminders();
   await loadAnnouncements();
   save();
   if (!localStorage.getItem("eventsImportHandled")) {
@@ -2045,6 +2407,9 @@ function onUserSignedOut() {
   currentUser = null;
   data.events = [];
   data.guests = [];
+  gifts = [];
+  giftClaims = [];
+  ownerClaimCounts = null;
   announcements = [];
   announcementReadIds = new Set();
   hasLoadedAnnouncementsOnce = false;
@@ -2083,6 +2448,7 @@ if (supabaseClient) {
     if (session) onUserSignedIn(session.user); else onUserSignedOut();
   });
 }
+initPublicRegistryIfNeeded();
 
 // ---------- AI chat widget ----------
 // Calls our own server function at /api/chat, which holds the real API key.
