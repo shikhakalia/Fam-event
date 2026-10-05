@@ -4,18 +4,64 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>FamEvent — Family Planning & Event Organization</title>
+<script>
+// Applied before first paint so there's no flash of the wrong theme/accent/text size.
+(function () {
+  document.documentElement.setAttribute("data-theme", localStorage.getItem("theme") || "light");
+  document.documentElement.setAttribute("data-text-size", localStorage.getItem("textSize") || "medium");
+  var accents = { violet: ["#7c3aed", "#6d28d9", "#ede9fe"], blue: ["#2563eb", "#1d4ed8", "#dbeafe"], emerald: ["#059669", "#047857", "#d1fae5"], rose: ["#e11d48", "#be123c", "#ffe4e6"], amber: ["#d97706", "#b45309", "#fef3c7"] };
+  var a = accents[localStorage.getItem("accentColor")] || accents.violet;
+  document.documentElement.style.setProperty("--accent", a[0]);
+  document.documentElement.style.setProperty("--accent-dark", a[1]);
+  document.documentElement.style.setProperty("--accent-light", a[2]);
+})();
+</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 <script src="vendor/supabase.min.js"></script>
 <style>
+  :root { --accent: #7c3aed; --accent-dark: #6d28d9; --accent-light: #ede9fe; }
   body { font-family: 'Inter', system-ui, sans-serif; background:#FFFBF5; }
   .pill { font-size:11px; font-weight:600; padding:4px 10px; border-radius:9999px; display:inline-block; }
   table th, table td { padding: 8px 6px; }
-  .navlink.active { background:#ede9fe; color:#6d28d9; }
+  .navlink.active { background:var(--accent-light) !important; color:var(--accent-dark) !important; }
   .panel { display:none; }
   .panel.active { display:block; }
   input, select { outline:none; }
-  input:focus, select:focus { border-color:#7c3aed !important; }
+  input:focus, select:focus { border-color:var(--accent) !important; }
+
+  /* ---- accent color (Settings → Appearance) ---- */
+  .bg-violet-600 { background-color: var(--accent) !important; }
+  .hover\:bg-violet-700:hover { background-color: var(--accent-dark) !important; }
+  .text-violet-600 { color: var(--accent) !important; }
+  .hover\:text-violet-700:hover { color: var(--accent-dark) !important; }
+  .text-violet-700 { color: var(--accent-dark) !important; }
+  .border-violet-600, .border-violet-400 { border-color: var(--accent) !important; }
+  .bg-violet-50, .bg-violet-100 { background-color: var(--accent-light) !important; }
+  .accent-violet-600 { accent-color: var(--accent) !important; }
+  .from-violet-300 { --tw-gradient-from: var(--accent) !important; }
+  .from-violet-900 { --tw-gradient-from: var(--accent-dark) !important; }
+
+  /* ---- text size (Settings → Appearance) ---- */
+  html[data-text-size="small"] { font-size: 87.5%; }
+  html[data-text-size="large"] { font-size: 112.5%; }
+
+  /* ---- dark mode (Settings → Appearance) ---- */
+  html[data-theme="dark"] body { background:#13111a; color:#e2e8f0; }
+  html[data-theme="dark"] .bg-white { background-color:#1e1b29 !important; }
+  html[data-theme="dark"] .bg-slate-50 { background-color:#241f33 !important; }
+  html[data-theme="dark"] .bg-slate-100 { background-color:#2d2a3f !important; }
+  html[data-theme="dark"] .hover\:bg-slate-50:hover { background-color:#241f33 !important; }
+  html[data-theme="dark"] .hover\:bg-slate-200:hover { background-color:#3a3650 !important; }
+  html[data-theme="dark"] .text-slate-800, html[data-theme="dark"] .text-slate-900 { color:#f1f5f9 !important; }
+  html[data-theme="dark"] .text-slate-600 { color:#cbd5e1 !important; }
+  html[data-theme="dark"] .text-slate-500 { color:#94a3b8 !important; }
+  html[data-theme="dark"] .text-slate-400 { color:#71809b !important; }
+  html[data-theme="dark"] .border-slate-100 { border-color:#2d2a3f !important; }
+  html[data-theme="dark"] .border-slate-200 { border-color:#3a3650 !important; }
+  html[data-theme="dark"] input, html[data-theme="dark"] select, html[data-theme="dark"] textarea { background-color:#1e1b29; color:#e2e8f0; }
+  html[data-theme="dark"] .bg-black\/40 { background-color: rgba(0,0,0,.6) !important; }
+  html[data-theme="dark"] #dp-popup, html[data-theme="dark"] #mini-cal-popup { background-color:#1e1b29 !important; }
 </style>
 </head>
 <body class="text-slate-800">
@@ -135,7 +181,7 @@
       <a href="#" data-tab="notes" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-note-sticky w-4"></i>Notes</a>
       <a href="#" data-tab="announcements" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-bullhorn w-4"></i>Announcements</a>
       <a href="#" data-tab="soon" data-title="Messages" data-icon="fa-message" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-message w-4"></i>Messages</a>
-      <a href="#" data-tab="soon" data-title="Settings" data-icon="fa-gear" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-gear w-4"></i>Settings</a>
+      <a href="#" data-tab="settings" class="navlink flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-gear w-4"></i>Settings</a>
     </nav>
   </div>
 
@@ -431,7 +477,101 @@
       </div>
     </section>
 
-    <!-- PLACEHOLDER PANEL (Themes, Messages, Settings) -->
+    <!-- SETTINGS PANEL -->
+    <section class="panel" id="panel-settings">
+      <div class="space-y-5">
+        <!-- PROFILE -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <h4 class="font-bold mb-3"><i class="fa-solid fa-user text-violet-600 mr-1"></i> Profile</h4>
+          <div id="settings-profile-gate" class="hidden text-center py-6">
+            <p class="text-slate-500 text-sm">Sign in to manage your profile. <button type="button" onclick="openAuthModal('signin')" class="text-violet-600 font-semibold">Sign in</button></p>
+          </div>
+          <div id="settings-profile-content">
+            <div class="flex items-center gap-4 mb-4">
+              <img id="settings-avatar-preview" src="" class="w-16 h-16 rounded-full object-cover bg-slate-100 hidden">
+              <div id="settings-avatar-placeholder" class="w-16 h-16 rounded-full bg-gradient-to-br from-violet-300 to-pink-300 flex items-center justify-center text-white text-xl font-bold">?</div>
+              <input id="settings-avatar-url" oninput="updateAvatarPreview()" placeholder="Photo URL (optional)" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+              <input id="settings-name" placeholder="Full name" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+              <input id="settings-email" type="email" placeholder="Email" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+              <input id="settings-phone" placeholder="Phone" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            </div>
+            <div id="settings-profile-error" class="hidden text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2 mb-3"></div>
+            <div id="settings-profile-success" class="hidden text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 mb-3"></div>
+            <button onclick="saveProfile()" class="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700">Save profile</button>
+
+            <div class="border-t border-slate-100 mt-5 pt-4">
+              <p class="font-semibold text-sm mb-2">Change password</p>
+              <div class="flex flex-wrap gap-2">
+                <input id="settings-new-password" type="password" placeholder="New password" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <input id="settings-confirm-password" type="password" placeholder="Confirm new password" class="flex-1 min-w-[160px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <button onclick="changePassword()" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-semibold hover:bg-slate-200">Update password</button>
+              </div>
+            </div>
+
+            <div class="border-t border-slate-100 mt-5 pt-4">
+              <p class="font-semibold text-sm mb-1 text-rose-600">Delete account</p>
+              <p class="text-xs text-slate-500 mb-2">Permanently deletes every event you own (and their guests/announcements) and signs you out. Full login removal isn't available from the browser yet — this only clears your data, not the account credentials.</p>
+              <button onclick="deleteAccountData()" class="px-4 py-2 rounded-lg bg-rose-50 text-rose-600 text-sm font-semibold hover:bg-rose-100">Delete my data</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- NOTIFICATIONS -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <h4 class="font-bold mb-3"><i class="fa-solid fa-bell text-violet-600 mr-1"></i> Notifications</h4>
+          <label class="flex items-center justify-between py-2.5 border-t border-slate-50 first:border-t-0 cursor-pointer">
+            <span class="text-sm text-slate-600">Task & note reminders</span>
+            <input type="checkbox" id="settings-reminders-enabled" onchange="saveNotificationSettings()" class="w-4 h-4 accent-violet-600 cursor-pointer">
+          </label>
+          <div class="flex items-center justify-between py-2.5 border-t border-slate-50">
+            <span class="text-sm text-slate-600">Remind me</span>
+            <select id="settings-reminder-lead" onchange="saveNotificationSettings()" class="px-2 py-1.5 border border-slate-200 rounded-lg text-sm">
+              <option value="0">At the time</option>
+              <option value="5">5 minutes before</option>
+              <option value="15">15 minutes before</option>
+              <option value="60">1 hour before</option>
+              <option value="1440">1 day before</option>
+            </select>
+          </div>
+          <div class="flex items-center justify-between py-2.5 border-t border-slate-50">
+            <span class="text-sm text-slate-600">Announcement alerts</span>
+            <select id="settings-announcement-alerts" onchange="saveNotificationSettings()" class="px-2 py-1.5 border border-slate-200 rounded-lg text-sm">
+              <option value="all">All connected events</option>
+              <option value="mine">Only my events</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- APPEARANCE -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <h4 class="font-bold mb-3"><i class="fa-solid fa-palette text-violet-600 mr-1"></i> Appearance</h4>
+          <div class="flex items-center justify-between py-2.5 border-t border-slate-50 first:border-t-0">
+            <span class="text-sm text-slate-600">Theme</span>
+            <div class="flex items-center gap-1 text-xs font-medium" id="settings-theme-toggle">
+              <button type="button" data-theme="light" onclick="setTheme('light')" class="px-2.5 py-1 rounded-full"><i class="fa-solid fa-sun mr-1"></i>Light</button>
+              <button type="button" data-theme="dark" onclick="setTheme('dark')" class="px-2.5 py-1 rounded-full"><i class="fa-solid fa-moon mr-1"></i>Dark</button>
+            </div>
+          </div>
+          <div class="flex items-center justify-between py-2.5 border-t border-slate-50">
+            <span class="text-sm text-slate-600">Accent color</span>
+            <div class="flex items-center gap-2" id="settings-accent-swatches"></div>
+          </div>
+          <div class="flex items-center justify-between py-2.5 border-t border-slate-50">
+            <span class="text-sm text-slate-600">Text size</span>
+            <div class="flex items-center gap-1 text-xs font-medium" id="settings-textsize-toggle">
+              <button type="button" data-size="small" onclick="setTextSize('small')" class="px-2.5 py-1 rounded-full text-xs">A</button>
+              <button type="button" data-size="medium" onclick="setTextSize('medium')" class="px-3 py-1 rounded-full text-sm">A</button>
+              <button type="button" data-size="large" onclick="setTextSize('large')" class="px-3.5 py-1 rounded-full text-base">A</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLACEHOLDER PANEL (Themes, Messages) -->
     <section class="panel" id="panel-soon">
       <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 text-center">
         <div class="w-14 h-14 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center mx-auto mb-3 text-xl">
@@ -819,15 +959,32 @@ let announcementReadIds = new Set();
 function mapAnnouncementRow(row) {
   return { id: row.id, eventId: row.event_id, type: row.type, icon: row.icon, title: row.title, body: row.body || "", senderId: row.sender_id, createdAt: row.created_at };
 }
+let hasLoadedAnnouncementsOnce = false;
 async function loadAnnouncements() {
   if (!supabaseClient || !currentUser) { announcements = []; announcementReadIds = new Set(); renderAnnouncements(); return; }
+  const previousIds = new Set(announcements.map(a => a.id));
+  const wasFirstLoad = !hasLoadedAnnouncementsOnce;
   const { data: rows, error } = await supabaseClient.from("announcements").select("*").order("created_at", { ascending: false });
-  announcements = error ? [] : rows.map(mapAnnouncementRow);
+  const freshRows = error ? [] : rows.map(mapAnnouncementRow);
   if (error) console.error(error);
   const { data: readRows, error: readErr } = await supabaseClient.from("announcement_reads").select("announcement_id").eq("user_id", currentUser.id);
   announcementReadIds = readErr ? new Set() : new Set(readRows.map(r => r.announcement_id));
   if (readErr) console.error(readErr);
+  const freshlyArrived = freshRows.filter(a => !previousIds.has(a.id) && !announcementReadIds.has(a.id));
+  announcements = freshRows;
   renderAnnouncements();
+  if (!wasFirstLoad) notifyNewAnnouncements(freshlyArrived);
+  hasLoadedAnnouncementsOnce = true;
+}
+function notifyNewAnnouncements(items) {
+  if (!items.length || !("Notification" in window) || Notification.permission !== "granted") return;
+  const pref = getNotificationSettings().announcementAlerts;
+  if (pref === "none") return;
+  items.forEach(a => {
+    const ev = eventById(a.eventId);
+    if (pref === "mine" && (!ev || ev.ownerId !== currentUser.id)) return;
+    new Notification(`${a.icon} ${a.title}`, { body: ev ? ev.name : undefined });
+  });
 }
 async function createAnnouncement(eventId, type, icon, title, body) {
   if (!supabaseClient || !currentUser || !eventId) return;
@@ -1288,9 +1445,12 @@ function scheduleReminders() {
   Object.values(reminderTimers).forEach(t => clearTimeout(t));
   reminderTimers = {};
   if (!("Notification" in window) || Notification.permission !== "granted") return;
+  const settings = getNotificationSettings();
+  if (!settings.remindersEnabled) return;
+  const leadMs = settings.reminderLeadMinutes * 60 * 1000;
   data.tasks.forEach(t => {
     if (t.completed || !t.dueIso) return;
-    const delay = parseDueIso(t.dueIso).getTime() - Date.now();
+    const delay = parseDueIso(t.dueIso).getTime() - Date.now() - leadMs;
     if (delay <= 0 || delay > 2147483647) return;
     reminderTimers["task-" + t.id] = setTimeout(() => {
       const ev = t.eventId ? eventById(t.eventId) : null;
@@ -1299,13 +1459,167 @@ function scheduleReminders() {
   });
   data.notes.forEach(n => {
     if (!n.reminderIso) return;
-    const delay = parseDueIso(n.reminderIso).getTime() - Date.now();
+    const delay = parseDueIso(n.reminderIso).getTime() - Date.now() - leadMs;
     if (delay <= 0 || delay > 2147483647) return;
     reminderTimers["note-" + n.id] = setTimeout(() => {
       const ev = n.eventId ? eventById(n.eventId) : null;
       new Notification("Reminder: " + n.title, { body: ev ? `For ${ev.name}` : (n.body || undefined) });
     }, delay);
   });
+}
+
+// ---------- settings: notifications ----------
+function getNotificationSettings() {
+  return {
+    remindersEnabled: localStorage.getItem("remindersEnabled") !== "0",
+    reminderLeadMinutes: parseInt(localStorage.getItem("reminderLeadMinutes") || "0"),
+    announcementAlerts: localStorage.getItem("announcementAlerts") || "all"
+  };
+}
+function saveNotificationSettings() {
+  localStorage.setItem("remindersEnabled", document.getElementById("settings-reminders-enabled").checked ? "1" : "0");
+  localStorage.setItem("reminderLeadMinutes", document.getElementById("settings-reminder-lead").value);
+  localStorage.setItem("announcementAlerts", document.getElementById("settings-announcement-alerts").value);
+  scheduleReminders();
+}
+function initNotificationSettingsUI() {
+  const s = getNotificationSettings();
+  document.getElementById("settings-reminders-enabled").checked = s.remindersEnabled;
+  document.getElementById("settings-reminder-lead").value = String(s.reminderLeadMinutes);
+  document.getElementById("settings-announcement-alerts").value = s.announcementAlerts;
+}
+
+// ---------- settings: profile ----------
+function initProfileUI() {
+  const gate = document.getElementById("settings-profile-gate");
+  const content = document.getElementById("settings-profile-content");
+  gate.classList.toggle("hidden", !!currentUser);
+  content.classList.toggle("hidden", !currentUser);
+  if (!currentUser) return;
+  document.getElementById("settings-name").value = currentUser.user_metadata?.full_name || "";
+  document.getElementById("settings-email").value = currentUser.email || "";
+  document.getElementById("settings-phone").value = currentUser.user_metadata?.phone || "";
+  document.getElementById("settings-avatar-url").value = currentUser.user_metadata?.avatar_url || "";
+  updateAvatarPreview();
+}
+function updateAvatarPreview() {
+  const url = document.getElementById("settings-avatar-url").value.trim();
+  const img = document.getElementById("settings-avatar-preview");
+  const placeholder = document.getElementById("settings-avatar-placeholder");
+  if (url) {
+    img.src = url;
+    img.classList.remove("hidden");
+    placeholder.classList.add("hidden");
+  } else {
+    img.classList.add("hidden");
+    placeholder.classList.remove("hidden");
+    placeholder.textContent = (currentUser ? userDisplayName(currentUser) : "?").charAt(0).toUpperCase() || "?";
+  }
+}
+async function saveProfile() {
+  if (!currentUser) return;
+  const name = document.getElementById("settings-name").value.trim();
+  const email = document.getElementById("settings-email").value.trim();
+  const phone = document.getElementById("settings-phone").value.trim();
+  const avatarUrl = document.getElementById("settings-avatar-url").value.trim();
+  const errEl = document.getElementById("settings-profile-error");
+  const okEl = document.getElementById("settings-profile-success");
+  errEl.classList.add("hidden");
+  okEl.classList.add("hidden");
+  const updatePayload = { data: { full_name: name, phone, avatar_url: avatarUrl } };
+  if (email && email !== currentUser.email) updatePayload.email = email;
+  const { data: result, error } = await supabaseClient.auth.updateUser(updatePayload);
+  if (error) { errEl.textContent = error.message; errEl.classList.remove("hidden"); return; }
+  currentUser = result.user;
+  showLoggedIn(currentUser);
+  updateAvatarPreview();
+  okEl.textContent = updatePayload.email ? "Saved! Check your new email address to confirm the change." : "Profile saved.";
+  okEl.classList.remove("hidden");
+}
+async function changePassword() {
+  if (!currentUser) return;
+  const pw = document.getElementById("settings-new-password").value;
+  const confirmPw = document.getElementById("settings-confirm-password").value;
+  const errEl = document.getElementById("settings-profile-error");
+  const okEl = document.getElementById("settings-profile-success");
+  errEl.classList.add("hidden");
+  okEl.classList.add("hidden");
+  if (pw.length < 8) { errEl.textContent = "Password must be at least 8 characters."; errEl.classList.remove("hidden"); return; }
+  if (pw !== confirmPw) { errEl.textContent = "Passwords don't match."; errEl.classList.remove("hidden"); return; }
+  const { error } = await supabaseClient.auth.updateUser({ password: pw });
+  if (error) { errEl.textContent = error.message; errEl.classList.remove("hidden"); return; }
+  document.getElementById("settings-new-password").value = "";
+  document.getElementById("settings-confirm-password").value = "";
+  okEl.textContent = "Password updated.";
+  okEl.classList.remove("hidden");
+}
+async function deleteAccountData() {
+  if (!currentUser) return;
+  if (!confirm("Delete all events you own (and their guests/announcements)? This can't be undone. Your login stays active, but all your event data will be gone.")) return;
+  const ownedEvents = data.events.filter(e => e.ownerId === currentUser.id);
+  for (const ev of ownedEvents) {
+    await supabaseClient.from("events").delete().eq("id", ev.id);
+  }
+  await loadEventsAndGuests();
+  await loadAnnouncements();
+  save();
+  alert("Your event data has been deleted.");
+}
+
+// ---------- settings: appearance (theme, accent, text size) ----------
+const ACCENT_PRESETS = [
+  { key: "violet", color: "#7c3aed", dark: "#6d28d9", light: "#ede9fe" },
+  { key: "blue", color: "#2563eb", dark: "#1d4ed8", light: "#dbeafe" },
+  { key: "emerald", color: "#059669", dark: "#047857", light: "#d1fae5" },
+  { key: "rose", color: "#e11d48", dark: "#be123c", light: "#ffe4e6" },
+  { key: "amber", color: "#d97706", dark: "#b45309", light: "#fef3c7" }
+];
+function applyAccent(key) {
+  const preset = ACCENT_PRESETS.find(p => p.key === key) || ACCENT_PRESETS[0];
+  document.documentElement.style.setProperty("--accent", preset.color);
+  document.documentElement.style.setProperty("--accent-dark", preset.dark);
+  document.documentElement.style.setProperty("--accent-light", preset.light);
+  localStorage.setItem("accentColor", key);
+  renderAccentSwatches();
+}
+function renderAccentSwatches() {
+  const current = localStorage.getItem("accentColor") || "violet";
+  document.getElementById("settings-accent-swatches").innerHTML = ACCENT_PRESETS.map(p =>
+    `<button type="button" onclick="applyAccent('${p.key}')" title="${p.key}" style="background:${p.color}" class="w-7 h-7 rounded-full ${p.key === current ? "ring-2 ring-offset-2 ring-slate-400" : ""}"></button>`
+  ).join("");
+}
+function setTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("theme", theme);
+  updateThemeButtons();
+}
+function updateThemeButtons() {
+  const current = localStorage.getItem("theme") || "light";
+  document.querySelectorAll("#settings-theme-toggle button").forEach(btn => {
+    const active = btn.dataset.theme === current;
+    btn.className = `px-2.5 py-1 rounded-full ${active ? "bg-violet-100 text-violet-700" : "text-slate-400 hover:bg-slate-50"}`;
+  });
+}
+function setTextSize(size) {
+  document.documentElement.setAttribute("data-text-size", size);
+  localStorage.setItem("textSize", size);
+  updateTextSizeButtons();
+}
+function updateTextSizeButtons() {
+  const current = localStorage.getItem("textSize") || "medium";
+  const padding = { small: "px-2.5", medium: "px-3", large: "px-3.5" };
+  const textClass = { small: "text-xs", medium: "text-sm", large: "text-base" };
+  document.querySelectorAll("#settings-textsize-toggle button").forEach(btn => {
+    const active = btn.dataset.size === current;
+    btn.className = `${padding[btn.dataset.size]} py-1 rounded-full ${textClass[btn.dataset.size]} ${active ? "bg-violet-100 text-violet-700" : "text-slate-400 hover:bg-slate-50"}`;
+  });
+}
+function renderSettings() {
+  initProfileUI();
+  initNotificationSettingsUI();
+  renderAccentSwatches();
+  updateThemeButtons();
+  updateTextSizeButtons();
 }
 
 // ---------- decoration themes ----------
@@ -1567,6 +1881,7 @@ function renderAll() {
   renderDashboard();
   renderCalendar();
   renderAnnouncements();
+  renderSettings();
   scheduleReminders();
 }
 renderAll();
@@ -1732,6 +2047,7 @@ function onUserSignedOut() {
   data.guests = [];
   announcements = [];
   announcementReadIds = new Set();
+  hasLoadedAnnouncementsOnce = false;
   showLoggedOut();
   updateEventGates();
   save();
